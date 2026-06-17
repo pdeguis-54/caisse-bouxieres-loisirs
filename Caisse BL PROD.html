@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Caisse Bouxières Loisirs</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Caisse BL">
+    <meta name="theme-color" content="#2c3e50">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #e67e22;
+            --dark: #2c3e50;
+            --dark-light: #34495e;
+            --light: #f4f4f9;
+            --text-dark: #333;
+            --logo-overlay-z: 1000;
+            
+            --bg-body: var(--light);
+            --text-body: var(--text-dark);
+            --bg-block-caisse: white;
+            --text-block-caisse: var(--text-dark);
+            --border-ligne: #eee;
+            --text-sous-total: #555;
+            
+            --bg-blocs-bas: var(--dark);
+        }
+
+        body.dark-theme {
+            --bg-body: #1a252f;
+            --text-body: #f4f4f9;
+            --bg-block-caisse: #2c3e50;
+            --text-block-caisse: #ffffff;
+            --border-ligne: #34495e;
+            --text-sous-total: #bdc3c7;
+            --bg-blocs-bas: #12191f;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 10px; 
+            background-color: var(--bg-body); 
+            color: var(--text-body); 
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            -webkit-user-select: none; 
+            user-select: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        h1 { text-align: center; color: var(--dark); margin-bottom: 5px; font-size: 1.8rem; }
+        body.dark-theme h1 { color: #ffffff; }
+        h2 { text-align: center; color: #7f8c8d; font-size: 1rem; margin-top: 0; font-weight: normal; }
+        body.dark-theme h2 { color: #bdc3c7; }
+        
+        .barre-multiplicateurs { display: flex; gap: 10px; margin-bottom: 12px; justify-content: center; }
+        .btn-mult { flex: 1; max-width: 100px; background-color: #bdc3c7; color: var(--dark); border: none; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.1s; -webkit-appearance: none; }
+        .btn-mult.actif { background-color: var(--warning); color: white; box-shadow: 0 0 8px rgba(230, 126, 34, 0.5); }
+
+        .barre-categories { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .btn-cat { background-color: #e0e0e0; color: var(--dark); border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.1s; }
+        body.dark-theme .btn-cat { background-color: #34495e; color: #fff; }
+        .btn-cat.actif { background-color: var(--primary) !important; color: white !important; }
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        
+        .btn-produit { 
+            position: relative; background-color: var(--primary); color: white; border: none; padding: 18px 5px; 
+            font-size: 1.15rem; font-weight: bold; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+            transition: background-color 0.1s, transform 0.05s, opacity 0.2s; -webkit-appearance: none; 
+        }
+        .btn-produit:active { background-color: var(--primary-dark); transform: scale(0.96); }
+        .btn-produit:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        body.edit-stock-mode .btn-produit { background-color: var(--warning) !important; animation: pulse-edit 1.5s infinite ease-in-out; }
+        @keyframes pulse-edit {
+            0% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 0 10px rgba(230, 126, 34, 0.6); }
+            100% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        }
+
+        .icon { font-size: 1.8rem; }
+        .prix-tag { display: block; font-size: 0.9rem; font-weight: normal; opacity: 0.9; }
+        
+        .stock-tag { position: absolute; top: 6px; right: 8px; background: rgba(0, 0, 0, 0.4); color: #fff; padding: 2px 6px; border-radius: 8px; font-size: 0.75rem; font-weight: normal; display: none; }
+        .stock-tag.low { background: var(--danger); font-weight: bold; }
+        
+        .block-caisse { background: var(--bg-block-caisse); color: var(--text-block-caisse); padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; transition: background-color 0.2s; }
+        .liste-ticket { min-height: 50px; }
+        .ligne { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-ligne); }
+        .details-produit { display: flex; flex-direction: column; flex-grow: 1; }
+        .nom-produit { font-weight: bold; font-size: 1.05rem; }
+        .sous-total { color: var(--text-sous-total); font-size: 0.95rem; }
+        
+        .btn-retirer { background-color: var(--danger); color: white; border: none; padding: 8px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; margin-left: 10px; flex-shrink: 0; -webkit-appearance: none; }
+        .btn-retirer:active { opacity: 0.8; }
+
+        .total { font-size: 1.6rem; font-weight: bold; color: var(--danger); margin-top: 15px; display: flex; justify-content: space-between; padding: 0 5px; }
+        .actions { margin-top: 20px; display: flex; gap: 6px; }
+        .btn-action { flex: 1; padding: 15px 2px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: opacity 0.1s; -webkit-appearance: none; }
+        .btn-annuler { background-color: var(--warning); color: white; max-width: 75px; }
+        .btn-offert { background-color: #9b59b6; color: white; max-width: 85px; }
+        .btn-valider { background-color: var(--success); color: white; }
+        .btn-sumup { background-color: #002d62; color: white; display: flex; align-items: center; justify-content: center; } 
+        .btn-action:active { opacity: 0.85; }
+
+        .block-suivi { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 20px; transition: background-color 0.2s; }
+        .block-suivi h3 { margin-top: 0; color: #f1c40f; border-bottom: 1px solid var(--dark-light); padding-bottom: 8px; font-size: 1.2rem; }
+        .liste-suivi-wrapper { max-height: 200px; overflow-y: auto; padding-right: 5px; -webkit-overflow-scrolling: touch; }
+        .ligne-suivi { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--dark-light); font-size: 0.95rem; }
+        .ligne-suivi strong { font-weight: 600; }
+        
+        .sub-totaux-modes { border-top: 1px dashed var(--dark-light); margin-top: 10px; padding-top: 8px; font-size: 0.9rem; color: #bdc3c7; }
+        .sub-totaux-modes div { display: flex; justify-content: space-between; padding: 3px 5px; }
+        .total-global { font-size: 1.3rem; font-weight: bold; color: var(--success); margin-top: 15px; display: flex; justify-content: space-between; padding: 0 5px; border-top: 1px solid var(--dark-light); padding-top: 10px; }
+        
+        /* Styles blocs Synchronisation QR */
+        .block-sync-qr { background: #2980b9; color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 20px; display: none; }
+        .block-sync-qr h3 { margin-top: 0; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; font-size: 1.2rem; }
+        .badge-mode { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: white; margin-left: 10px; vertical-align: middle; }
+        .badge-master { color: var(--danger); }
+        .badge-bénévole { color: #2980b9; }
+        .grid-sync { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .btn-sync { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .btn-sync-send { background-color: #e67e22; }
+        .btn-sync-receive { background-color: #2ecc71; }
+        
+        /* Modale Plein Écran pour Scanner et afficher QR */
+        .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px; box-sizing: border-box; }
+        .modal-qr-content { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        #reader { width: 100%; max-width: 400px; background: black; border-radius: 12px; overflow: hidden; }
+
+        .block-parametres { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .block-parametres h4 { margin-top: 0; margin-bottom: 12px; color: #f1c40f; border-bottom: 1px solid var(--dark-light); padding-bottom: 8px; font-size: 1.1rem; }
+        .config-options { font-size: 0.95rem; display: flex; flex-direction: column; width: 100%; gap: 14px; color: #ecf0f1; }
+        .config-item { display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 2px 5px; }
+        .config-item-sub { padding-left: 25px; }
+        
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #7f8c8d; transition: .2s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .btn-reset { background-color: #95a5a6; color: var(--dark); border: none; width: 100%; padding: 12px; margin-top: 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
+        .btn-export { background-color: var(--primary); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
+        .btn-stock-refill { background-color: var(--warning); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; display: none; }
+        .btn-undo { background-color: var(--warning); color: white; border: none; width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; -webkit-appearance: none; }
+        .btn-undo:disabled { background-color: #555; color: #888; cursor: not-allowed; opacity: 0.6; }
+
+        #logo-overlay, #cancel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: var(--logo-overlay-z); opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; }
+        #logo-overlay { background-color: rgba(44, 62, 80, 0.9); }
+        #cancel-overlay { background-color: rgba(230, 126, 34, 0.9); }
+        #logo-overlay.visible, #cancel-overlay.visible { opacity: 1; }
+        .footer { text-align: center; color: #95a5a6; font-size: 0.8rem; margin-top: 30px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Bouxières Loisirs</h1>
+    <h2>Système de Caisse</h2>
+
+    <div class="barre-multiplicateurs">
+        <button class="btn-mult" id="mult-2" onclick="changerMultiplicateur(2)">x2</button>
+        <button class="btn-mult" id="mult-5" onclick="changerMultiplicateur(5)">x5</button>
+        <button class="btn-mult" id="mult-10" onclick="changerMultiplicateur(10)">x10</button>
+    </div>
+
+    <div class="barre-categories">
+        <button class="btn-cat actif" id="cat-all" onclick="filtrerCategorie('all')">Tout</button>
+        <button class="btn-cat" id="cat-boisson" onclick="filtrerCategorie('boisson')">🥤 Boissons</button>
+        <button class="btn-cat" id="cat-snack" onclick="filtrerCategorie('snack')">🥖 Snack</button>
+        <button class="btn-cat" id="cat-sucre" onclick="filtrerCategorie('sucre')">🥞 Sucré</button>
+    </div>
+
+    <div class="grid" id="grid-produits">
+        <button class="btn-produit" data-cat="boisson" data-id="Boisson" onclick="gererClicProduit('Boisson', 2.00, event)" oncontextmenu="gererClicDroitProduit('Boisson', event)">
+            <span class="stock-tag" id="stock-Boisson"></span>
+            <span class="icon">🥤</span><span>Soft</span><span class="prix-tag">2.00 €</span>
+        </button>
+        <button class="btn-produit" data-cat="boisson" data-id="Bière" onclick="gererClicProduit('Bière', 3.00, event)" oncontextmenu="gererClicDroitProduit('Bière', event)">
+            <span class="stock-tag" id="stock-Bière"></span>
+            <span class="icon">🍺</span><span>Bière</span><span class="prix-tag">3.00 €</span>
+        </button>
+        <button class="btn-produit" data-cat="boisson" data-id="Eau" onclick="gererClicProduit('Eau', 1.50, event)" oncontextmenu="gererClicDroitProduit('Eau', event)">
+            <span class="stock-tag" id="stock-Eau"></span>
+            <span class="icon">💧</span><span>Eau</span><span class="prix-tag">1.50 €</span>
+        </button>
+        <button class="btn-produit" data-cat="snack" data-id="Sandwich" onclick="gererClicProduit('Sandwich', 4.50, event)" oncontextmenu="gererClicDroitProduit('Sandwich', event)">
+            <span class="stock-tag" id="stock-Sandwich"></span>
+            <span class="icon">🥖</span><span>Sandwich</span><span class="prix-tag">4.50 €</span>
+        </button>
+        <button class="btn-produit" data-cat="snack" data-id="Frites" onclick="gererClicProduit('Frites', 2.50, event)" oncontextmenu="gererClicDroitProduit('Frites', event)">
+            <span class="stock-tag" id="stock-Frites"></span>
+            <span class="icon">🍟</span><span>Frites</span><span class="prix-tag">2.50 €</span>
+        </button>
+        <button class="btn-produit" data-cat="sucre" data-id="Crêpe" onclick="gererClicProduit('Crêpe', 2.00, event)" oncontextmenu="gererClicDroitProduit('Crêpe', event)">
+            <span class="stock-tag" id="stock-Crêpe"></span>
+            <span class="icon">🥞</span><span>Crêpe</span><span class="prix-tag">2.00 €</span>
+        </button>
+        <button class="btn-produit" data-cat="sucre" data-id="Gaufre" onclick="gererClicProduit('Gaufre', 2.50, event)" oncontextmenu="gererClicDroitProduit('Gaufre', event)">
+            <span class="stock-tag" id="stock-Gaufre"></span>
+            <span class="icon">🧇</span><span>Gaufre</span><span class="prix-tag">2.50 €</span>
+        </button>
+        <button class="btn-produit" data-cat="sucre" data-id="Glace" onclick="gererClicProduit('Glace', 2.00, event)" oncontextmenu="gererClicDroitProduit('Glace', event)">
+            <span class="stock-tag" id="stock-Glace"></span>
+            <span class="icon">🍦</span><span>Glace</span><span class="prix-tag">2.00 €</span>
+        </button>
+        <button class="btn-produit" data-cat="all" data-id="Consigne Ecocup" onclick="gererClicProduit('Consigne Ecocup', 1.00, event)" oncontextmenu="gererClicDroitProduit('Consigne Ecocup', event)">
+            <span class="stock-tag" id="stock-Consigne Ecocup"></span>
+            <span class="icon">♻️</span><span>Consigne Ecocup</span><span class="prix-tag">1.00 €</span>
+        </button>
+        <button class="btn-produit" data-cat="boisson" data-id="Café" onclick="gererClicProduit('Café', 1.00, event)" oncontextmenu="gererClicDroitProduit('Café', event)">
+            <span class="stock-tag" id="stock-Café"></span>
+            <span class="icon">☕</span><span>Café</span><span class="prix-tag">1.00 €</span>
+        </button>
+    </div>
+
+    <div class="block-caisse">
+        <div class="liste-ticket" id="ticket-en-cours">
+            <p style="text-align: center; color: #95a5a6;" id="ticket-vide">Le ticket est vide</p>
+        </div>
+        <div class="total">
+            <span>TOTAL</span><span id="total-ticket">0.00 €</span>
+        </div>
+        <div class="actions">
+            <button class="btn-action btn-annuler" onclick="annulerTicket()">Annuler</button>
+            <button class="btn-action btn-offert" id="btn-mode-offert" onclick="validerTicket(false, true)">🎁 Offert</button>
+            <button class="btn-action btn-sumup" id="btn-mode-carte" onclick="validerTicket(true)">💳 Carte</button>
+            <button class="btn-action btn-valider" onclick="validerTicket(false)">💶 Espèces</button>
+        </div>
+    </div>
+
+    <div class="block-suivi">
+        <h3>Résumé des Ventes</h3>
+        <button class="btn-undo" id="btn-annuler-derniere" onclick="annulerDerniereVente()" disabled>↩️ Annuler la dernière vente</button>
+        <div class="liste-suivi-wrapper" id="suivi-ventes"></div>
+        
+        <div class="sub-totaux-modes">
+            <div><span>Total en Espèces :</span><span id="total-especes">0.00 €</span></div>
+            <div><span>Total en Carte (CB) :</span><span id="total-carte">0.00 €</span></div>
+            <div><span>Pertes & Offerts (Valeur) :</span><span id="total-offert" style="color: #9b59b6;">0.00 €</span></div>
+        </div>
+        <div class="total-global">
+            <span>Total Général</span><span id="total-general">0.00 €</span>
+        </div>
+    </div>
+    
+    <div class="block-sync-qr" id="block-synchronisation-reseau">
+        <h3>Synchronisation Réseau Local <span id="txt-statut-badge" class="badge-mode"></span></h3>
+        <div class="grid-sync">
+            <button id="btn-sync-sat-send" class="btn-sync btn-sync-send" onclick="genererQREnvoiVentes()">🟧 Transmettre mes Ventes (QR Code)</button>
+            <button id="btn-sync-sat-receive" class="btn-sync btn-sync-receive" onclick="ouvrirScannerStockFrais()">📷 Scanner le Stock Frais Général</button>
+            
+            <button id="btn-sync-mast-receive" class="btn-sync btn-sync-receive" onclick="ouvrirScannerVentesBenevole()">📷 Scanner les Ventes d'une Caisse</button>
+            <button id="btn-sync-mast-send" class="btn-sync btn-sync-send" onclick="genererQREnvoiStockFrais()">🟩 Déployer le Stock Frais (QR Code)</button>
+        </div>
+    </div>
+
+    <div class="block-parametres">
+        <h4>Configuration & Options</h4>
+        <div class="config-options">
+            <div class="config-item">
+                <label for="chk-activer-cb">Activer le paiement CB</label>
+                <label class="switch"><input type="checkbox" id="chk-activer-cb" onchange="toggleBoutonCB()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item config-item-sub" id="wrapper-sub-sumup">
+                <label for="chk-activer-sumup">Utiliser l'application SumUp</label>
+                <label class="switch"><input type="checkbox" id="chk-activer-sumup" onchange="toggleBoutonSumUp()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item">
+                <label for="chk-activer-offert">Activer les pertes & offerts (🎁)</label>
+                <label class="switch"><input type="checkbox" id="chk-activer-offert" onchange="toggleBoutonOffert()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item">
+                <label for="chk-activer-rendu">Activer l'assistant rendu de monnaie</label>
+                <label class="switch"><input type="checkbox" id="chk-activer-rendu" onchange="toggleRenduMonnaie()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item">
+                <label for="chk-mode-sombre">Activer mode sombre</label>
+                <label class="switch"><input type="checkbox" id="chk-mode-sombre" onchange="toggleModeSombre()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item">
+                <label for="chk-activer-stocks">Activer le suivi des stocks</label>
+                <label class="switch"><input type="checkbox" id="chk-activer-stocks" onchange="toggleGestionStocks()"><span class="slider"></span></label>
+            </div>
+            <div class="config-item config-item-sub" id="wrapper-sub-master" style="display: none;">
+                <label for="chk-mode-master" style="color: #f1c40f; font-weight: bold;">👑 Mode Caisse Centrale (Master)</label>
+                <label class="switch">
+                    <input type="checkbox" id="chk-mode-master" onchange="toggleModeMaster()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <button class="btn-stock-refill" id="btn-refill" onclick="toggleModeEditionStock()">✏️ Ajuster les stocks (Mode Édition)</button>
+        <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
+        <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
+    </div>
+
+    <div id="modal-generateur" class="modal-qr">
+        <h3 id="modal-gen-titre" style="margin-top:0; text-align:center;">QR Code de Synchro</h3>
+        <p id="modal-gen-desc" style="text-align:center; font-size:0.9rem; color:#bdc3c7; max-width: 320px; margin-bottom: 15px;"></p>
+        <div class="modal-qr-content">
+            <div id="qrcode-target"></div>
+        </div>
+        <button class="btn-close-modal" onclick="fermerModalGenerateur()">Fermer / Quitter</button>
+    </div>
+
+    <div id="modal-scanner" class="modal-qr">
+        <h3 id="modal-scan-titre" style="margin-top:0;">Alignez le QR Code dans le cadre</h3>
+        <div id="reader"></div>
+        <button class="btn-close-modal" style="margin-top:20px;" onclick="fermerScanner()">Annuler</button>
+    </div>
+
+    <div id="logo-overlay"><h2 style="color: white; font-size: 2rem; font-weight: bold;" id="text-validation">Commande Validée !</h2></div>
+    <div id="cancel-overlay"><h2 style="color: white; font-size: 2rem; font-weight: bold;">Vente Annulée !</h2></div>
+
+    <div class="footer">Caisse Bouxières Loisirs © 2026</div>
+
+    <script>
+        let ticketActuel = new Map();
+        let ventesGlobales = {};
+        let totalGeneral = 0;
+        let totalEspeces = 0;
+        let totalCarte = 0;
+        let totalOffert = 0;
+        let dernierTicketValide = null;
+        let multiplicateurEnCours = 1;
+        let modeEditionStockActif = false;
+        let html5QrcodeScanner = null;
+
+        // Base de prix fixe pour recalculer sur la caisse centrale (Master)
+        const CATALOGUE_PRIX = {
+            'Boisson': 2.00, 'Bière': 3.00, 'Eau': 1.50, 'Sandwich': 4.50, 'Frites': 2.50,
+            'Crêpe': 2.00, 'Gaufre': 2.50, 'Glace': 2.00, 'Consigne Ecocup': 1.00, 'Café': 1.00
+        };
+
+        let stocksProduits = {
+            'Boisson': 100, 'Bière': 120, 'Eau': 60, 'Sandwich': 50, 'Frites': 80,
+            'Crêpe': 100, 'Gaufre': 60, 'Glace': 40, 'Consigne Ecocup': 200, 'Café': 150
+        };
+
+        /* ======================================================= */
+        /* DICOS DE TRADUCTION NUMÉRIQUE <-> CHAÎNE DE CARACTÈRES  */
+        /* ======================================================= */
+        const NOM_VERS_ID = {
+            'Boisson': 1, 'Bière': 2, 'Eau': 3, 'Sandwich': 4, 'Frites': 5,
+            'Crêpe': 6, 'Gaufre': 7, 'Glace': 8, 'Consigne Ecocup': 9, 'Café': 10
+        };
+
+        const ID_VERS_NOM = {
+            1: 'Boisson', 2: 'Bière', 3: 'Eau', 4: 'Sandwich', 5: 'Frites',
+            6: 'Crêpe', 7: 'Gaufre', 8: 'Glace', 9: 'Consigne Ecocup', 10: 'Café'
+        };
+
+        const ticketVideEl = document.getElementById('ticket-vide');
+        const ticketEnCoursEl = document.getElementById('ticket-en-cours');
+        const totalTicketEl = document.getElementById('total-ticket');
+        const suiviVentesEl = document.getElementById('suivi-ventes');
+        const totalGeneralEl = document.getElementById('total-general');
+        const totalEspecesEl = document.getElementById('total-especes');
+        const totalCarteEl = document.getElementById('total-carte');
+        const totalOffertEl = document.getElementById('total-offert');
+        const logoOverlay = document.getElementById('logo-overlay');
+        const textValidationEl = document.getElementById('text-validation');
+        const cancelOverlay = document.getElementById('cancel-overlay');
+        const btnAnnulerDerniere = document.getElementById('btn-annuler-derniere');
+        const btnModeCarte = document.getElementById('btn-mode-carte');
+        const btnModeOffert = document.getElementById('btn-mode-offert');
+        
+        const chkModeMaster = document.getElementById('chk-mode-master');
+        const chkActiverCB = document.getElementById('chk-activer-cb');
+        const chkActiverSumUp = document.getElementById('chk-activer-sumup');
+        const wrapperSubSumUp = document.getElementById('wrapper-sub-sumup');
+        const chkActiverOffert = document.getElementById('chk-activer-offert');
+        const chkActiverRendu = document.getElementById('chk-activer-rendu');
+        const chkModeSombre = document.getElementById('chk-mode-sombre');
+        const chkActiverStocks = document.getElementById('chk-activer-stocks');
+        const btnRefill = document.getElementById('btn-refill');
+        const txtStatutBadge = document.getElementById('txt-statut-badge');
+        
+        const wrapperSubMaster = document.getElementById('wrapper-sub-master');
+        const blockSyncReseau = document.getElementById('block-synchronisation-reseau');
+
+        function initConfiguration() {
+            let configMaster = localStorage.getItem('mode_master_actif');
+            if (configMaster === null) { configMaster = 'false'; localStorage.setItem('mode_master_actif', 'false'); }
+            chkModeMaster.checked = (configMaster === 'true');
+
+            let configCB = localStorage.getItem('cb_general_actif');
+            if (configCB === null) { configCB = 'true'; localStorage.setItem('cb_general_actif', 'true'); }
+            chkActiverCB.checked = (configCB === 'true');
+
+            let configSumUp = localStorage.getItem('sumup_actif');
+            if (configSumUp === null) { configSumUp = 'true'; localStorage.setItem('sumup_actif', 'true'); }
+            chkActiverSumUp.checked = (configSumUp === 'true');
+            appliquerAffichageCB();
+
+            let configOffert = localStorage.getItem('offert_actif');
+            if (configOffert === null) { configOffert = 'true'; localStorage.setItem('offert_actif', 'true'); }
+            chkActiverOffert.checked = (configOffert === 'true');
+            appliquerAffichageOffert();
+
+            let configRendu = localStorage.getItem('rendu_actif');
+            if (configRendu === null) { configRendu = 'true'; localStorage.setItem('rendu_actif', 'true'); }
+            chkActiverRendu.checked = (configRendu === 'true');
+
+            let configSombre = localStorage.getItem('mode_sombre_actif');
+            if (configSombre === null) { configSombre = 'false'; localStorage.setItem('mode_sombre_actif', 'false'); }
+            chkModeSombre.checked = (configSombre === 'true');
+            appliquerModeSombre();
+
+            let configStocks = localStorage.getItem('stocks_actif');
+            if (configStocks === null) { configStocks = 'false'; localStorage.setItem('stocks_actif', 'false'); }
+            chkActiverStocks.checked = (configStocks === 'true');
+            
+            let stocksSauvegardes = localStorage.getItem('stocks_data');
+            if (stocksSauvegardes) { stocksProduits = JSON.parse(stocksSauvegardes); }
+            
+            appliquerGestionStocks();
+            appliquerInterfaceMasterSatellite();
+        }
+
+        function toggleModeMaster() {
+            localStorage.setItem('mode_master_actif', chkModeMaster.checked ? 'true' : 'false');
+            appliquerInterfaceMasterSatellite();
+        }
+
+        function appliquerInterfaceMasterSatellite() {
+            const estMaster = chkModeMaster.checked;
+            txtStatutBadge.textContent = estMaster ? "👑 CENTRALE" : "🧑‍🤝‍🧑 BÉNÉVOLE";
+            txtStatutBadge.className = `badge-mode badge-${estMaster ? 'master' : 'bénévole'}`;
+
+            document.getElementById('btn-sync-sat-send').style.display = estMaster ? 'none' : 'flex';
+            document.getElementById('btn-sync-sat-receive').style.display = estMaster ? 'none' : 'flex';
+            document.getElementById('btn-sync-mast-receive').style.display = estMaster ? 'flex' : 'none';
+            document.getElementById('btn-sync-mast-send').style.display = estMaster ? 'flex' : 'none';
+        }
+
+        function toggleBoutonCB() { localStorage.setItem('cb_general_actif', chkActiverCB.checked ? 'true' : 'false'); appliquerAffichageCB(); }
+        function toggleBoutonSumUp() { localStorage.setItem('sumup_actif', chkActiverSumUp.checked ? 'true' : 'false'); appliquerAffichageCB(); }
+        function appliquerAffichageCB() {
+            if (chkActiverCB.checked) {
+                btnModeCarte.style.display = 'flex'; wrapperSubSumUp.style.display = 'flex';
+                btnModeCarte.textContent = chkActiverSumUp.checked ? "💳 Carte (SumUp)" : "💳 Carte";
+            } else { btnModeCarte.style.display = 'none'; wrapperSubSumUp.style.display = 'none'; }
+        }
+        function toggleBoutonOffert() { localStorage.setItem('offert_actif', chkActiverOffert.checked ? 'true' : 'false'); appliquerAffichageOffert(); }
+        function appliquerAffichageOffert() { btnModeOffert.style.display = chkActiverOffert.checked ? 'flex' : 'none'; }
+        function toggleRenduMonnaie() { localStorage.setItem('rendu_actif', chkActiverRendu.checked ? 'true' : 'false'); }
+        function toggleModeSombre() { localStorage.setItem('mode_sombre_actif', chkModeSombre.checked ? 'true' : 'false'); appliquerModeSombre(); }
+        function appliquerModeSombre() { if (chkModeSombre.checked) { document.body.classList.add('dark-theme'); } else { document.body.classList.remove('dark-theme'); } }
+        
+        function toggleGestionStocks() { 
+            localStorage.setItem('stocks_actif', chkActiverStocks.checked ? 'true' : 'false'); 
+            if (!chkActiverStocks.checked && modeEditionStockActif) { toggleModeEditionStock(); } 
+            appliquerGestionStocks(); 
+        }
+        
+        function appliquerGestionStocks() {
+            const actif = chkActiverStocks.checked;
+            btnRefill.style.display = actif ? 'block' : 'none';
+            
+            if (actif) {
+                wrapperSubMaster.style.display = 'flex';
+                blockSyncReseau.style.display = 'block';
+            } else {
+                wrapperSubMaster.style.display = 'none';
+                blockSyncReseau.style.display = 'none';
+                if (chkModeMaster.checked) {
+                    chkModeMaster.checked = false;
+                    toggleModeMaster();
+                }
+            }
+
+            document.querySelectorAll('.btn-produit').forEach(btn => {
+                const id = btn.getAttribute('data-id');
+                const badge = document.getElementById(`stock-${id}`);
+                if (badge) {
+                    if (actif) {
+                        badge.style.display = 'block'; badge.textContent = stocksProduits[id];
+                        if (stocksProduits[id] <= 5) { badge.classList.add('low'); } else { badge.classList.remove('low'); }
+                        btn.disabled = (stocksProduits[id] <= 0 && !modeEditionStockActif);
+                    } else { badge.style.display = 'none'; btn.disabled = false; }
+                }
+            });
+        }
+
+        function filtrerCategorie(cat) {
+            document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('actif'));
+            document.getElementById(`cat-${cat}`).classList.add('actif');
+            document.querySelectorAll('.btn-produit').forEach(btn => {
+                btn.style.display = (cat === 'all' || btn.getAttribute('data-cat') === cat || btn.getAttribute('data-cat') === 'all') ? 'flex' : 'none';
+            });
+        }
+
+        function toggleModeEditionStock() {
+            modeEditionStockActif = !modeEditionStockActif; multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs();
+            if (modeEditionStockActif) {
+                document.body.classList.add('edit-stock-mode'); btnRefill.textContent = "💾 Quitter le Mode Édition (Sauvegarder)"; btnRefill.style.backgroundColor = "var(--success)";
+            } else {
+                document.body.classList.remove('edit-stock-mode'); btnRefill.textContent = "✏️ Ajuster les stocks (Mode Édition)"; btnRefill.style.backgroundColor = "var(--warning)";
+                localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+            }
+            appliquerGestionStocks();
+        }
+
+        function gererClicProduit(nom, prix, event) {
+            if (modeEditionStockActif) {
+                event.preventDefault(); stocksProduits[nom] = (stocksProduits[nom] || 0) + multiplicateurEnCours; appliquerGestionStocks();
+            } else { ajouterAuTicket(nom, prix); }
+        }
+
+        function gererClicDroitProduit(nom, event) {
+            if (modeEditionStockActif) {
+                event.preventDefault(); stocksProduits[nom] = Math.max(0, (stocksProduits[nom] || 0) - multiplicateurEnCours); appliquerGestionStocks(); return false;
+            }
+        }
+
+        function changerMultiplicateur(valeur) {
+            multiplicateurEnCours = (multiplicateurEnCours === valeur) ? 1 : valeur; mettreAJourVisuelMultiplicateurs();
+        }
+
+        function mettreAJourVisuelMultiplicateurs() {
+            [2, 5, 10].forEach(v => {
+                const btn = document.getElementById(`mult-${v}`);
+                if (multiplicateurEnCours === v) { btn.classList.add('actif'); } else { btn.classList.remove('actif'); }
+            });
+        }
+
+        function ajouterAuTicket(nom, prix) {
+            let qteAAjouter = multiplicateurEnCours;
+            let qteActuelleDansPanier = ticketActuel.has(nom) ? ticketActuel.get(nom).quantite : 0;
+            let qteTotaleVoulue = qteActuelleDansPanier + qteAAjouter;
+
+            if (chkActiverStocks.checked && (stocksProduits[nom] < qteTotaleVoulue)) {
+                let disponibleReel = stocksProduits[nom] - qteActuelleDansPanier;
+                if (disponibleReel <= 0) {
+                    alert(`Stock insuffisant ! Le stock complet de [${nom}] (${stocksProduits[nom]} unité(s)) est déjà engagé dans le panier.`);
+                    multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs(); return;
+                } else {
+                    alert(`Stock insuffisant pour x${qteAAjouter}.\nAjout automatique du maximum disponible : +${disponibleReel}.`);
+                    qteAAjouter = disponibleReel;
+                }
+            }
+
+            if (ticketActuel.has(nom)) {
+                let prod = ticketActuel.get(nom); prod.quantite += qteAAjouter; ticketActuel.set(nom, prod);
+            } else { ticketActuel.set(nom, { prix: prix, quantite: qteAAjouter }); }
+
+            multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs(); mettreAJourTicket();
+        }
+
+        function retirerDuTicket(nom) {
+            if (ticketActuel.has(nom)) {
+                let prod = ticketActuel.get(nom); prod.quantite--;
+                if (prod.quantite <= 0) { ticketActuel.delete(nom); } else { ticketActuel.set(nom, prod); }
+            }
+            mettreAJourTicket();
+        }
+
+        function mettreAJourTicket() {
+            ticketEnCoursEl.innerHTML = ''; let total = 0;
+            if (ticketActuel.size === 0) { ticketEnCoursEl.appendChild(ticketVideEl); } 
+            else {
+                ticketActuel.forEach((produit, nom) => {
+                    let sousTotal = produit.prix * produit.quantite; total += sousTotal;
+                    let ligne = document.createElement('div'); ligne.className = 'ligne';
+                    ligne.innerHTML = `<div class="details-produit"><span class="nom-produit">${nom} x${produit.quantite}</span><span class="sous-total">${sousTotal.toFixed(2)} €</span></div><button class="btn-retirer" onclick="retirerDuTicket('${nom}')">-1</button>`;
+                    ticketEnCoursEl.prepend(ligne);
+                });
+            }
+            totalTicketEl.textContent = total.toFixed(2) + ' €';
+        }
+
+        function annulerTicket() { if (ticketActuel.size > 0 && confirm("Annuler le ticket en cours ?")) { ticketActuel.clear(); mettreAJourTicket(); } }
+
+        function validerTicket(viaCarte = false, viaOffert = false) {
+            if (ticketActuel.size === 0) return;
+            let totalTicket = 0; ticketActuel.forEach((p) => { totalTicket += p.prix * p.quantite; });
+
+            if (!viaCarte && !viaOffert && chkActiverRendu.checked) {
+                let saisieClient = prompt(`💵 TOTAL À PAYER : ${totalTicket.toFixed(2)} €\nEntrez la somme donnée par le client :`);
+                if (saisieClient) {
+                    let sommeDonnee = parseFloat(saisieClient.replace(',', '.'));
+                    if (!isNaN(sommeDonnee) && sommeDonnee >= totalTicket) alert(`🪙 MONNAIE À RENDRE :\n\n👉 ${(sommeDonnee - totalTicket).toFixed(2)} €`);
+                }
+            }
+
+            if (viaCarte && chkActiverSumUp.checked) {
+                window.location.href = `sumupmerchant://pay/1.0?amount=${totalTicket.toFixed(2)}&currency=EUR&title=Bouxieres%20Loisirs&affiliate-key=application&payment-options=tap-to-pay`;
+            }
+
+            if (chkActiverStocks.checked) {
+                ticketActuel.forEach((p, nom) => { stocksProduits[nom] = Math.max(0, stocksProduits[nom] - p.quantite); });
+                localStorage.setItem('stocks_data', JSON.stringify(stocksProduits)); appliquerGestionStocks();
+            }
+
+            let modeVente = viaCarte ? 'carte' : (viaOffert ? 'offert' : 'especes');
+            dernierTicketValide = { items: new Map(), mode: modeVente, montant: totalTicket };
+            
+            ticketActuel.forEach((p, nom) => {
+                dernierTicketValide.items.set(nom, { prix: p.prix, quantite: p.quantite });
+                if (ventesGlobales[nom]) { ventesGlobales[nom].quantite += p.quantite; } else { ventesGlobales[nom] = { prix: p.prix, quantite: p.quantite }; }
+            });
+
+            if (viaCarte) { totalCarte += totalTicket; totalGeneral += totalTicket; } 
+            else if (viaOffert) { totalOffert += totalTicket; } 
+            else { totalEspeces += totalTicket; totalGeneral += totalTicket; }
+
+            btnAnnulerDerniere.disabled = false;
+            textValidationEl.textContent = viaOffert ? "Enregistré (Offert) !" : "Commande Validée !";
+            logoOverlay.classList.add('visible'); setTimeout(() => { logoOverlay.classList.remove('visible'); }, 1100);
+
+            ticketActuel.clear(); mettreAJourTicket(); mettreAJourSuiviGlobal();
+        }
+
+        function annulerDerniereVente() {
+            if (!dernierTicketValide) return;
+            if (confirm(`Voulez-vous annuler la DERNIÈRE commande (${dernierTicketValide.montant.toFixed(2)}€) ?`)) {
+                if (chkActiverStocks.checked) {
+                    dernierTicketValide.items.forEach((p, nom) => { stocksProduits[nom] += p.quantite; });
+                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits)); appliquerGestionStocks();
+                }
+                dernierTicketValide.items.forEach((p, nom) => {
+                    if (ventesGlobales[nom]) { ventesGlobales[nom].quantite -= p.quantite; if (ventesGlobales[nom].quantite <= 0) delete ventesGlobales[nom]; }
+                });
+
+                if (dernierTicketValide.mode === 'carte') { totalCarte -= dernierTicketValide.montant; totalGeneral -= dernierTicketValide.montant; } 
+                else if (dernierTicketValide.mode === 'offert') { totalOffert -= dernierTicketValide.montant; } 
+                else { totalEspeces -= dernierTicketValide.montant; totalGeneral -= dernierTicketValide.montant; }
+
+                dernierTicketValide = null; btnAnnulerDerniere.disabled = true;
+                cancelOverlay.classList.add('visible'); setTimeout(() => { cancelOverlay.classList.remove('visible'); }, 1000);
+                mettreAJourSuiviGlobal();
+            }
+        }
+
+        function mettreAJourSuiviGlobal() {
+            suiviVentesEl.innerHTML = '';
+            for (let nom in ventesGlobales) {
+                let p = ventesGlobales[nom];
+                let ligne = document.createElement('div'); ligne.className = 'ligne-suivi';
+                ligne.innerHTML = `<span>${nom} (x${p.quantite})</span><strong>${(p.prix * p.quantite).toFixed(2)} €</strong>`;
+                suiviVentesEl.appendChild(ligne);
+            }
+            totalGeneralEl.textContent = totalGeneral.toFixed(2) + ' €';
+            totalEspecesEl.textContent = totalEspeces.toFixed(2) + ' €';
+            totalCarteEl.textContent = totalCarte.toFixed(2) + ' €';
+            totalOffertEl.textContent = totalOffert.toFixed(2) + ' €';
+        }
+
+        function reinitialiserTout() {
+            if (confirm("Réinitialiser TOUTES les ventes de la journée ?")) {
+                ticketActuel.clear(); ventesGlobales = {}; totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0; dernierTicketValide = null; btnAnnulerDerniere.disabled = true;
+                mettreAJourTicket(); mettreAJourSuiviGlobal();
+            }
+        }
+
+        /* ======================================================= */
+        /* LOGIQUE DE SYNCHRONISATION PAR QR CODE EN INDICES NUM   */
+        /* ======================================================= */
+
+        function afficherModalGenerateur(titre, description, dataObjet) {
+            document.getElementById('modal-gen-titre').textContent = titre;
+            document.getElementById('modal-gen-desc').textContent = description;
+            
+            const target = document.getElementById('qrcode-target');
+            target.innerHTML = '';
+            document.getElementById('modal-generateur').style.display = 'flex';
+
+            setTimeout(() => {
+                const chaineJSON = JSON.stringify(dataObjet);
+                try {
+                    new QRCode(target, {
+                        text: chaineJSON,
+                        width: 260,
+                        height: 260,
+                        colorDark : "#2c3e50",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.L // Espace de stockage maximal
+                    });
+                } catch (err) {
+                    alert("Erreur critique d'encodage : " + err);
+                }
+            }, 50);
+        }
+
+        function fermerModalGenerateur() {
+            document.getElementById('modal-generateur').style.display = 'none';
+            document.getElementById('qrcode-target').innerHTML = '';
+        }
+
+        // ENCODAGE ULTRA COMPACTÉ EN CHIFFRES (Ex: [ [9, 14], [2, 5] ])
+        function genererQREnvoiVentes() {
+            if (Object.keys(ventesGlobales).length === 0) {
+                alert("Vous n'avez effectué aucune vente. Rien à transmettre !");
+                return;
+            }
+            
+            let ventesMinimales = [];
+            for (let nom in ventesGlobales) {
+                let idNumerique = NOM_VERS_ID[nom];
+                if (idNumerique) {
+                    ventesMinimales.push([idNumerique, ventesGlobales[nom].quantite]);
+                }
+            }
+
+            const paquet = {
+                t: "V", 
+                v: ventesMinimales 
+            };
+
+            afficherModalGenerateur(
+                "🟧 Transmettre mes Ventes",
+                "Montrez ce QR Code au responsable de la Caisse Centrale (Master) pour enregistrer vos ventes.",
+                paquet
+            );
+        }
+
+        function genererQREnvoiStockFrais() {
+            let stocksMinimaux = [];
+            for (let nom in stocksProduits) {
+                let idNumerique = NOM_VERS_ID[nom];
+                if (idNumerique) {
+                    stocksMinimaux.push([idNumerique, stocksProduits[nom]]);
+                }
+            }
+
+            const paquet = {
+                t: "S", 
+                s: stocksMinimaux 
+            };
+
+            afficherModalGenerateur(
+                "🟩 Déploiement des Stocks Frais",
+                "Les bénévoles doivent scanner ce QR Code pour synchroniser leurs compteurs locaux.",
+                paquet
+            );
+        }
+
+        function demarrerScanner(titre, callbackTraitement) {
+            document.getElementById('modal-scan-titre').textContent = titre;
+            document.getElementById('modal-scanner').style.display = 'flex';
+
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    try {
+                        const objetDecodé = JSON.parse(decodedText);
+                        callbackTraitement(objetDecodé);
+                        fermerScanner();
+                    } catch(e) {
+                        alert("⚠️ Erreur : Le QR code scanné n'est pas un format valide.");
+                        fermerScanner();
+                    }
+                },
+                () => { }
+            ).catch(err => {
+                alert("Impossible d'accéder à la caméra : " + err);
+                fermerScanner();
+            });
+        }
+
+        function fermerScanner() {
+            document.getElementById('modal-scanner').style.display = 'none';
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; }).catch(console.error);
+            }
+        }
+
+        function ouvrirScannerVentesBenevole() {
+            demarrerScanner("📷 Scannez le QR 'Ventes' d'un bénévole", (paquet) => {
+                if (paquet.t !== "V") {
+                    alert("Erreur : Ce QR Code ne provient pas de la caisse d'un bénévole.");
+                    return;
+                }
+
+                let recapTexte = "Ventes détectées :\n";
+                let ventesTraduites = [];
+
+                paquet.v.forEach(([idNumerique, quantite]) => {
+                    let nomReel = ID_VERS_NOM[idNumerique];
+                    if (nomReel) {
+                        recapTexte += `• ${nomReel} : x${quantite}\n`;
+                        ventesTraduites.push([nomReel, quantite]);
+                    }
+                });
+
+                if (confirm(recapTexte + "\nConfirmer l'intégration de ces ventes dans la Caisse Centrale ?")) {
+                    ventesTraduites.forEach(([nom, quantite]) => {
+                        stocksProduits[nom] = Math.max(0, (stocksProduits[nom] || 0) - quantite);
+                        let prixOfficiel = CATALOGUE_PRIX[nom] || 0;
+
+                        if (ventesGlobales[nom]) {
+                            ventesGlobales[nom].quantite += quantite;
+                        } else {
+                            ventesGlobales[nom] = { prix: prixOfficiel, quantite: quantite };
+                        }
+                    });
+
+                    recalculerFinancesMasterDepuisVentes();
+                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+                    appliquerGestionStocks();
+                    mettreAJourSuiviGlobal();
+
+                    alert("✅ Ventes intégrées avec succès !");
+                }
+            });
+        }
+
+        function ouvrirScannerStockFrais() {
+            demarrerScanner("📷 Scannez le QR 'Stock Frais' du Master", (paquet) => {
+                if (paquet.t !== "S") {
+                    alert("Erreur : Ce QR Code ne contient pas un stock valide émis par la caisse centrale.");
+                    return;
+                }
+
+                if (confirm("Mettre à jour vos stocks avec les données officielles de la Caisse Centrale ?")) {
+                    let nouveauxStocks = {};
+                    paquet.s.forEach(([idNumerique, stock]) => {
+                        let nomReel = ID_VERS_NOM[idNumerique];
+                        if (nomReel) {
+                            nouveauxStocks[nomReel] = stock;
+                        }
+                    });
+                    
+                    stocksProduits = nouveauxStocks;
+                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+                    
+                    if(confirm("Voulez-vous réinitialiser votre historique local de ventes sur ce téléphone ?\n(Recommandé pour repartir sur un cycle propre)")) {
+                        ventesGlobales = {};
+                        totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0;
+                    }
+
+                    appliquerGestionStocks();
+                    mettreAJourSuiviGlobal();
+                    alert("✅ Alignement des stocks réussi !");
+                }
+            });
+        }
+
+        function recalculerFinancesMasterDepuisVentes() {
+            totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0;
+            for(let nom in ventesGlobales) {
+                let item = ventesGlobales[nom];
+                totalEspeces += (item.prix * item.quantite);
+                totalGeneral += (item.prix * item.quantite);
+            }
+        }
+
+        function exporterBilan() {
+            if (Object.keys(ventesGlobales).length === 0) { alert("Aucune vente enregistrée pour le moment."); return; }
+            let maintenant = new Date();
+            let dateStr = maintenant.toLocaleDateString('fr-FR');
+            let heureStr = maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+
+            let texteBilan = `📊 BILAN DES VENTES - Bouxières Loisirs\n👑 Mode : ${chkModeMaster.checked ? 'Caisse Centrale (Master)' : 'Caisse Bénévole'}\n📅 Date : ${dateStr} à ${heureStr}\n-----------------------------------\n`;
+            for (let nom in ventesGlobales) {
+                let prod = ventesGlobales[nom];
+                texteBilan += `• ${nom} : ${prod.quantite} x ${prod.prix.toFixed(2)}€ = ${(prod.prix * prod.quantite).toFixed(2)}€\n`;
+            }
+            texteBilan += `-----------------------------------\n`;
+            texteBilan += `💶 Total Espèces : ${totalEspeces.toFixed(2)} €\n`;
+            texteBilan += `💳 Total Carte (CB) : ${totalCarte.toFixed(2)} €\n`;
+            texteBilan += `🎁 Pertes & Offerts : ${totalOffert.toFixed(2)} €\n`;
+            texteBilan += `💰 TOTAL GÉNÉRAL EN CAISSE : ${totalGeneral.toFixed(2)} €`;
+
+            if (navigator.share) { navigator.share({ title: 'Bilan Ventes Bouxières Loisirs', text: texteBilan }).catch(console.error); } 
+            else {
+                let blob = new Blob([texteBilan], { type: "text/plain;charset=utf-8" });
+                let lien = document.createElement("a");
+                lien.href = URL.createObjectURL(blob); lien.download = `bilan_ventes_${dateStr.replace(/\//g, '-')}.txt`;
+                document.body.appendChild(lien); lien.click(); document.body.removeChild(lien);
+            }
+        }
+
+        initConfiguration();
+        mettreAJourTicket();
+        mettreAJourSuiviGlobal();
+    </script>
+</body>
+</html>
