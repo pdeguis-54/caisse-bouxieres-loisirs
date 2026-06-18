@@ -157,7 +157,7 @@
         .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         #reader { width: 100%; max-width: 400px; background: black; border-radius: 12px; overflow: hidden; }
 
-        /* Formulaire Édition Article */
+        /* Formulaire Édition Article / Bénévole */
         .form-article { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .form-article label { font-weight: bold; font-size: 0.85rem; color: #333; margin-top: 2px; }
         .form-article input, .form-article select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
@@ -282,12 +282,37 @@
         .btn-rendu-valider { background: var(--success); color: white; }
         .btn-rendu-valider:disabled { background: #7f8c8d; opacity: 0.4; cursor: not-allowed; }
         .btn-rendu-annuler { background: #95a5a6; color: white; max-width: 90px; }
+
+        /* Styles spécifiques pour le bandeau et gestion des bénévoles */
+        .block-benevole-top {
+            background: #e67e22; color: white; padding: 12px; border-radius: 12px;
+            margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
+        }
+        .block-benevole-top label { font-weight: bold; font-size: 1rem; }
+        .benevole-select-row { display: flex; gap: 8px; width: 100%; max-width: 400px; }
+        .benevole-select-row select { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 1rem; font-weight: bold; background: white; color: #333; }
+        .btn-benevole-valider { background: #2ecc71; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        
+        .wrapper-gestion-benevoles { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; }
+        .ligne-liste-benevole { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--dark-light); padding: 5px 0; }
+        .btn-small-edit { background: var(--primary); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+        .btn-small-add { background: var(--success); color: white; border: none; padding: 6px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-top: 5px; width: 100%; }
+        .txt-nom-benevole-titre { font-size: 0.95rem; color: var(--warning); font-weight: bold; margin-left: 5px; display: inline-block; }
     </style>
 </head>
 <body>
 
     <h1>Bouxières Loisirs</h1>
-    <h2>Système de Caisse</h2>
+    <h2>Système de Caisse <span id="titre-benevole-actif" class="txt-nom-benevole-titre"></span></h2>
+
+    <div class="block-benevole-top" id="container-selection-benevole">
+        <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
+        <div class="benevole-select-row">
+            <select id="select-benevole-top"></select>
+            <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
+        </div>
+    </div>
 
     <div class="barre-multiplicateurs">
         <button class="btn-mult" id="mult-2" onclick="changerMultiplicateur(2)">x2</button>
@@ -384,10 +409,32 @@
                 </div>
             </div>
 
+            <div style="margin-top: 15px; border-top: 1px dashed var(--dark-light); padding-top: 12px;">
+                <label style="font-weight: bold; color: #f1c40f; display: block; margin-bottom: 5px;">👥 Gestion des Bénévoles :</label>
+                <div class="wrapper-gestion-benevoles" id="liste-benevoles-config"></div>
+                <button class="btn-small-add" onclick="abrirModalBenevole()">➕ Ajouter un bénévole</button>
+            </div>
+
             <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms, Stocks...)</button>
             <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
             <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
         </div>
+    </div>
+
+    <div id="modal-benevole" class="modal-qr">
+        <h3 id="modal-benevole-titre" style="margin-top:0;">Éditer le Bénévole</h3>
+        <div class="modal-qr-content">
+            <div class="form-article">
+                <input type="hidden" id="form-old-index-benevole">
+                <label for="form-nom-benevole">Prénom et Nom du bénévole :</label>
+                <input type="text" id="form-nom-benevole" placeholder="Ex: Jean Dupont">
+                <div class="form-actions">
+                    <button class="btn-form btn-form-save" onclick="sauvegarderFormulaireBenevole()">Enregistrer</button>
+                    <button class="btn-form btn-form-delete" id="btn-form-supprimer-benevole" onclick="supprimerBenevoleFormulaire()">Supprimer</button>
+                </div>
+            </div>
+        </div>
+        <button class="btn-close-modal" onclick="fermerModalBenevole()">Annuler</button>
     </div>
 
     <div id="modal-article" class="modal-qr">
@@ -495,6 +542,18 @@
         let toastActuelTimeout = null;
         let toastActuelNomProduit = null;
         let toastActuelQuantiteCumulee = 0;
+
+        // Variables pour la gestion des bénévoles
+        let listeBenevoles = [];
+        let benevoleActif = "";
+
+        const BENEVOLES_PAR_DEFAUT = [
+            "Philippe De Guis",
+            "Lucie de Caestecker",
+            "Carole Pettinella",
+            "Jean-Marie de Caestecker",
+            "Karine Tartarin"
+        ];
 
         const BIBLIOTHEQUE_EMOJIS = [
             '🥤', '🍺', '☕', '💧', '🍹', '🍷', '🍾', 
@@ -648,8 +707,171 @@
             }
         }
 
+        // Fonctions spécifiques à la logique de gestion des bénévoles
+        function chargerListeBenevoles() {
+            let sauv = localStorage.getItem('liste_benevoles_bl');
+            if (sauv) {
+                listeBenevoles = JSON.parse(sauv);
+            } else {
+                listeBenevoles = [...BENEVOLES_PAR_DEFAUT];
+                localStorage.setItem('liste_benevoles_bl', JSON.stringify(listeBenevoles));
+            }
+            
+            benevoleActif = localStorage.getItem('benevole_actif_bl') || "";
+            
+            rendreInterfaceBenevoles();
+        }
+
+        function rendreInterfaceBenevoles() {
+            // Remplir le select de démarrage / haut de page
+            const selectTop = document.getElementById('select-benevole-top');
+            selectTop.innerHTML = '';
+            
+            let optDefaut = document.createElement('option');
+            optDefaut.value = ""; optDefaut.textContent = "-- Choisissez votre nom --";
+            selectTop.appendChild(optDefaut);
+
+            listeBenevoles.forEach(nom => {
+                let opt = document.createElement('option');
+                opt.value = nom; opt.textContent = nom;
+                if (nom === benevoleActif) opt.selected = true;
+                selectTop.appendChild(opt);
+            });
+
+            // Afficher ou masquer le bandeau d'alerte en haut
+            const containerSelection = document.getElementById('container-selection-benevole');
+            const titreBenevoleActif = document.getElementById('titre-benevole-actif');
+            
+            if (benevoleActif) {
+                titreBenevoleActif.textContent = `(Bénévole : ${benevoleActif})`;
+                containerSelection.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center; max-width:500px; font-size:0.95rem;">
+                        <span>Session active : <strong>${benevoleActif}</strong></span>
+                        <button class="btn-retirer" style="background:#34495e; margin:0; padding:4px 10px;" onclick="deconnecterBenevole()">Changer</button>
+                    </div>
+                `;
+                containerSelection.style.background = "var(--bg-block-caisse)";
+                containerSelection.style.color = "var(--text-block-caisse)";
+                containerSelection.style.padding = "8px 12px";
+            } else {
+                titreBenevoleActif.textContent = "";
+                containerSelection.style.background = "#e67e22";
+                containerSelection.style.color = "white";
+                containerSelection.style.padding = "12px";
+                containerSelection.innerHTML = `
+                    <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
+                    <div class="benevole-select-row">
+                        <select id="select-benevole-top"></select>
+                        <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
+                    </div>
+                `;
+                // Reremplir après reconstruction HTML brute
+                const newSelect = document.getElementById('select-benevole-top');
+                newSelect.innerHTML = '';
+                newSelect.appendChild(optDefaut);
+                listeBenevoles.forEach(nom => {
+                    let opt = document.createElement('option');
+                    opt.value = nom; opt.textContent = nom;
+                    newSelect.appendChild(opt);
+                });
+            }
+
+            // Remplir l'interface de listing dans le panneau de configuration
+            const containerConfig = document.getElementById('liste-benevoles-config');
+            containerConfig.innerHTML = '';
+            
+            if (listeBenevoles.length === 0) {
+                containerConfig.innerHTML = `<p style="margin:5px 0; font-size:0.85rem; opacity:0.6; text-align:center;">Aucun bénévole configuré</p>`;
+            } else {
+                listeBenevoles.forEach((nom, index) => {
+                    let divLigne = document.createElement('div');
+                    divLigne.className = 'ligne-liste-benevole';
+                    divLigne.innerHTML = `
+                        <span style="font-size:0.9rem;">${nom}</span>
+                        <button class="btn-small-edit" onclick="abrirModalBenevole(${index})">Éditer</button>
+                    `;
+                    containerConfig.appendChild(divLigne);
+                });
+            }
+        }
+
+        function validerSelectionBenevole() {
+            const val = document.getElementById('select-benevole-top').value;
+            if(!val) { alert("Veuillez sélectionner un nom dans la liste !"); return; }
+            benevoleActif = val;
+            localStorage.setItem('benevole_actif_bl', benevoleActif);
+            rendreInterfaceBenevoles();
+        }
+
+        function deconnecterBenevole() {
+            benevoleActif = "";
+            localStorage.removeItem('benevole_actif_bl');
+            rendreInterfaceBenevoles();
+        }
+
+        function abrirModalBenevole(index = -1) {
+            document.getElementById('modal-benevole').style.display = 'flex';
+            if (index >= 0) {
+                document.getElementById('modal-benevole-titre').textContent = "Modifier le Bénévole";
+                document.getElementById('form-old-index-benevole').value = index;
+                document.getElementById('form-nom-benevole').value = listeBenevoles[index];
+                document.getElementById('btn-form-supprimer-benevole').style.display = "block";
+            } else {
+                document.getElementById('modal-benevole-titre').textContent = "Ajouter un Bénévole";
+                document.getElementById('form-old-index-benevole').value = -1;
+                document.getElementById('form-nom-benevole').value = "";
+                document.getElementById('btn-form-supprimer-benevole').style.display = "none";
+            }
+        }
+
+        function fermerModalBenevole() {
+            document.getElementById('modal-benevole').style.display = 'none';
+        }
+
+        function sauvegarderFormulaireBenevole() {
+            const index = parseInt(document.getElementById('form-old-index-benevole').value);
+            const nomSaisi = document.getElementById('form-nom-benevole').value.trim();
+            
+            if(!nomSaisi) { alert("Le nom ne peut pas être vide."); return; }
+
+            if(index >= 0) {
+                // Modification
+                let ancienNom = listeBenevoles[index];
+                listeBenevoles[index] = nomSaisi;
+                if(benevoleActif === ancienNom) {
+                    benevoleActif = nomSaisi;
+                    localStorage.setItem('benevole_actif_bl', benevoleActif);
+                }
+            } else {
+                // Ajout
+                listeBenevoles.push(nomSaisi);
+            }
+
+            localStorage.setItem('liste_benevoles_bl', JSON.stringify(listeBenevoles));
+            fermerModalBenevole();
+            rendreInterfaceBenevoles();
+        }
+
+        function supprimerBenevoleFormulaire() {
+            const index = parseInt(document.getElementById('form-old-index-benevole').value);
+            if(index >= 0) {
+                let nomASuppr = listeBenevoles[index];
+                if(confirm(`Supprimer définitivement le bénévole [${nomASuppr}] de la liste ?`)) {
+                    listeBenevoles.splice(index, 1);
+                    if(benevoleActif === nomASuppr) {
+                        benevoleActif = "";
+                        localStorage.removeItem('benevole_actif_bl');
+                    }
+                    localStorage.setItem('liste_benevoles_bl', JSON.stringify(listeBenevoles));
+                    fermerModalBenevole();
+                    rendreInterfaceBenevoles();
+                }
+            }
+        }
+
         function initConfiguration() {
             chargerBaseArticles();
+            chargerListeBenevoles();
 
             let configMaster = localStorage.getItem('mode_master_actif');
             if (configMaster === null) { configMaster = 'false'; localStorage.setItem('mode_master_actif', 'false'); }
@@ -1145,7 +1367,8 @@
                 let idNumerique = NOM_VERS_ID[nom];
                 if (idNumerique) { ventesMinimales.push([idNumerique, ventesGlobales[nom].quantite]); }
             }
-            const paquet = { t: "V", v: ventesMinimales };
+            // Inclusion du nom du bénévole dans le paquet QR Code (b: benevole)
+            const paquet = { t: "V", v: ventesMinimales, b: benevoleActif || "Anonyme" };
             afficherModalGenerateur("🟧 Transmettre mes Ventes", "Montrez ce QR Code au responsable de la Caisse Centrale (Master) pour enregistrer vos ventes.", paquet);
         }
 
@@ -1155,7 +1378,8 @@
                 let idNumerique = NOM_VERS_ID[nom];
                 if (idNumerique) { stocksMinimaux.push([idNumerique, catalogueProduits[nom].stock || 0]); }
             }
-            const paquet = { t: "S", s: stocksMinimaux };
+            // Inclusion du nom du responsable émetteur (b: benevole)
+            const paquet = { t: "S", s: stocksMinimaux, b: benevoleActif || "Anonyme" };
             afficherModalGenerateur("🟩 Déploiement des Stocks Frais", "Les bénévoles doivent scanner ce QR Code pour synchroniser leurs compteurs locaux.", paquet);
         }
 
@@ -1181,11 +1405,14 @@
             if (html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; }).catch(console.error); }
         }
 
-        function ouvrirScannerVentesBenevole() {
+        function abrirScannerVentesBenevole() {
             demarrerScanner("📷 Scannez le QR 'Ventes' d'un bénévole", (paquet) => {
                 if (paquet.t !== "V") { alert("Erreur : Ce QR Code ne provient pas de la caisse d'un bénévole."); return; }
 
-                let recapTexte = "Ventes détectées :\n"; let ventesTraduites = [];
+                let provenanceBenevole = paquet.b || "Inconnu";
+                let recapTexte = `Ventes détectées depuis la caisse de [${provenanceBenevole}] :\n`; 
+                let ventesTraduites = [];
+                
                 paquet.v.forEach(([idNumerique, quantite]) => {
                     let nomReel = ID_VERS_NOM[idNumerique];
                     if (nomReel) { recapTexte += `• ${nomReel} : x${quantite}\n`; ventesTraduites.push([nomReel, quantite]); }
@@ -1201,7 +1428,7 @@
                     recalculerFinancesMasterDepuisVentes();
                     localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
                     appliquerGestionStocks(); mettreAJourSuiviGlobal();
-                    alert("✅ Ventes intégrées avec succès !");
+                    alert(`✅ Ventes de [${provenanceBenevole}] intégrées avec succès !`);
                 }
             });
         }
@@ -1210,7 +1437,8 @@
             demarrerScanner("📷 Scannez le QR 'Stock Frais' du Master", (paquet) => {
                 if (paquet.t !== "S") { alert("Erreur : Ce QR Code ne contient pas un stock valide émis par la caisse centrale."); return; }
 
-                if (confirm("Mettre à jour vos stocks avec les données officielles de la Caisse Centrale ?")) {
+                let emetteurStock = paquet.b || "la Caisse Centrale";
+                if (confirm(`Mettre à jour vos stocks avec les données officielles émises par [${emetteurStock}] ?`)) {
                     paquet.s.forEach(([idNumerique, stock]) => {
                         let nomReel = ID_VERS_NOM[idNumerique];
                         if (nomReel && catalogueProduits[nomReel]) { catalogueProduits[nomReel].stock = stock; }
@@ -1239,7 +1467,7 @@
             let dateStr = maintenant.toLocaleDateString('fr-FR');
             let heureStr = maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
-            let texteBilan = `📊 BILAN DES VENTES - Bouxières Loisirs\n👑 Mode : ${chkModeMaster.checked ? 'Caisse Centrale (Master)' : 'Caisse Bénévole'}\n📅 Date : ${dateStr} à ${heureStr}\n-----------------------------------\n`;
+            let texteBilan = `📊 BILAN DES VENTES - Bouxières Loisirs\n👤 Bénévole actif : ${benevoleActif || "Non spécifié"}\n👑 Mode : ${chkModeMaster.checked ? 'Caisse Centrale (Master)' : 'Caisse Bénévole'}\n📅 Date : ${dateStr} à ${heureStr}\n-----------------------------------\n`;
             for (let nom in ventesGlobales) {
                 let prod = ventesGlobales[nom];
                 texteBilan += `• ${nom} : ${prod.quantite} x ${prod.prix.toFixed(2)}€ = ${(prod.prix * prod.quantite).toFixed(2)}€\n`;
