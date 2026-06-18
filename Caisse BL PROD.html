@@ -117,8 +117,20 @@
         .btn-sumup { background-color: #002d62; color: white; display: flex; align-items: center; justify-content: center; } 
         .btn-action:active { opacity: 0.85; }
 
+        /* Styles spécifiques pour les sections pliables */
+        .titre-repliable {
+            margin: 0; padding: 12px 5px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            user-select: none; -webkit-user-select: none;
+        }
+        .titre-repliable::after { content: '▶'; font-size: 0.85rem; transition: transform 0.2s; color: #f1c40f; }
+        .ouvert .titre-repliable::after { content: '▼'; }
+        .contenu-repliable { display: none; margin-top: 10px; }
+        .ouvert .contenu-repliable { display: block; }
+
         .block-suivi { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 20px; transition: background-color 0.2s; }
-        .block-suivi h3 { margin-top: 0; color: #f1c40f; border-bottom: 1px solid var(--dark-light); padding-bottom: 8px; font-size: 1.2rem; }
+        .block-suivi h3 { color: #f1c40f; font-size: 1.2rem; border-bottom: 1px solid var(--dark-light); }
+        .ouvert.block-suivi h3 { border-bottom: 1px solid var(--dark-light); }
         .liste-suivi-wrapper { max-height: 200px; overflow-y: auto; padding-right: 5px; -webkit-overflow-scrolling: touch; }
         .ligne-suivi { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--dark-light); font-size: 0.95rem; }
         .ligne-suivi strong { font-weight: 600; }
@@ -141,7 +153,7 @@
         /* Modale Plein Écran */
         .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 10px; box-sizing: border-box; }
         .modal-qr-content { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: #333; width: 100%; max-width: 340px; box-sizing: border-box; }
-        body.dark-theme .modal-qr-content { color: #333333; } /* Forcer la lisibilité des inputs de formulaire dans la modale */
+        body.dark-theme .modal-qr-content { color: #333333; }
         .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         #reader { width: 100%; max-width: 400px; background: black; border-radius: 12px; overflow: hidden; }
 
@@ -188,8 +200,9 @@
         .btn-form-save { background: var(--success); color: white; }
         .btn-form-delete { background: var(--danger); color: white; }
 
-        .block-parametres { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .block-parametres h4 { margin-top: 0; margin-bottom: 12px; color: #f1c40f; border-bottom: 1px solid var(--dark-light); padding-bottom: 8px; font-size: 1.1rem; }
+        .block-parametres { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .block-parametres h4 { color: #f1c40f; font-size: 1.1rem; border-bottom: 1px solid var(--dark-light); }
+        .ouvert.block-parametres h4 { border-bottom: 1px solid var(--dark-light); }
         .config-options { font-size: 0.95rem; display: flex; flex-direction: column; width: 100%; gap: 14px; color: #ecf0f1; }
         .config-item { display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 2px 5px; }
         .config-item-sub { padding-left: 25px; }
@@ -214,11 +227,11 @@
         #logo-overlay.visible, #cancel-overlay.visible { opacity: 1; }
         .footer { text-align: center; color: #95a5a6; font-size: 0.8rem; margin-top: 30px; margin-bottom: 10px; }
 
-        /* Styles spécifiques pour le nouvel Assistant Rendu Monnaie */
+        /* Styles spécifiques pour l'Assistant Rendu Monnaie */
         .modal-rendu {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); z-index: 2500;
-            display: none; align-items: center; justify-content: center; pading: 10px; box-sizing: border-box;
+            display: none; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;
         }
         .modal-rendu-box {
             background: var(--bg-block-caisse);
@@ -306,18 +319,20 @@
         </div>
     </div>
 
-    <div class="block-suivi">
-        <h3>Résumé des Ventes</h3>
-        <button class="btn-undo" id="btn-annuler-derniere" onclick="annulerDerniereVente()" disabled>↩️ Annuler la dernière vente</button>
-        <div class="liste-suivi-wrapper" id="suivi-ventes"></div>
-        
-        <div class="sub-totaux-modes">
-            <div><span>Total en Espèces :</span><span id="total-especes">0.00 €</span></div>
-            <div><span>Total en Carte (CB) :</span><span id="total-carte">0.00 €</span></div>
-            <div><span>Pertes & Offerts (Valeur) :</span><span id="total-offert" style="color: #9b59b6;">0.00 €</span></div>
-        </div>
-        <div class="total-global">
-            <span>Total Général</span><span id="total-general">0.00 €</span>
+    <div class="block-suivi" id="panel-suivi">
+        <h3 class="titre-repliable" onclick="toggleBlocRepliable('panel-suivi')">Résumé des Ventes</h3>
+        <div class="contenu-repliable">
+            <button class="btn-undo" id="btn-annuler-derniere" onclick="annulerDerniereVente()" disabled>↩️ Annuler la dernière vente</button>
+            <div class="liste-suivi-wrapper" id="suivi-ventes"></div>
+            
+            <div class="sub-totaux-modes">
+                <div><span>Total en Espèces :</span><span id="total-especes">0.00 €</span></div>
+                <div><span>Total en Carte (CB) :</span><span id="total-carte">0.00 €</span></div>
+                <div><span>Pertes & Offerts (Valeur) :</span><span id="total-offert" style="color: #9b59b6;">0.00 €</span></div>
+            </div>
+            <div class="total-global">
+                <span>Total Général</span><span id="total-general">0.00 €</span>
+            </div>
         </div>
     </div>
     
@@ -332,45 +347,47 @@
         </div>
     </div>
 
-    <div class="block-parametres">
-        <h4>Configuration & Options</h4>
-        <div class="config-options">
-            <div class="config-item">
-                <label for="chk-activer-cb">Activer le paiement CB</label>
-                <label class="switch"><input type="checkbox" id="chk-activer-cb" onchange="toggleBoutonCB()"><span class="slider"></span></label>
+    <div class="block-parametres" id="panel-parametres">
+        <h4 class="titre-repliable" onclick="toggleBlocRepliable('panel-parametres')">Configuration & Options</h4>
+        <div class="contenu-repliable">
+            <div class="config-options">
+                <div class="config-item">
+                    <label for="chk-activer-cb">Activer le paiement CB</label>
+                    <label class="switch"><input type="checkbox" id="chk-activer-cb" onchange="toggleBoutonCB()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item config-item-sub" id="wrapper-sub-sumup">
+                    <label for="chk-activer-sumup">Utiliser l'application SumUp</label>
+                    <label class="switch"><input type="checkbox" id="chk-activer-sumup" onchange="toggleBoutonSumUp()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item">
+                    <label for="chk-activer-offert">Activer les pertes & offerts (🎁)</label>
+                    <label class="switch"><input type="checkbox" id="chk-activer-offert" onchange="toggleBoutonOffert()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item">
+                    <label for="chk-activer-rendu">Activer l'assistant rendu de monnaie</label>
+                    <label class="switch"><input type="checkbox" id="chk-activer-rendu" onchange="toggleRenduMonnaie()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item">
+                    <label for="chk-mode-sombre">Activer mode sombre</label>
+                    <label class="switch"><input type="checkbox" id="chk-mode-sombre" onchange="toggleModeSombre()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item">
+                    <label for="chk-activer-stocks">Activer le suivi des stocks</label>
+                    <label class="switch"><input type="checkbox" id="chk-activer-stocks" onchange="toggleGestionStocks()"><span class="slider"></span></label>
+                </div>
+                <div class="config-item config-item-sub" id="wrapper-sub-master" style="display: none;">
+                    <label for="chk-mode-master" style="color: #f1c40f; font-weight: bold;">👑 Mode Caisse Centrale (Master)</label>
+                    <label class="switch">
+                        <input type="checkbox" id="chk-mode-master" onchange="toggleModeMaster()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
-            <div class="config-item config-item-sub" id="wrapper-sub-sumup">
-                <label for="chk-activer-sumup">Utiliser l'application SumUp</label>
-                <label class="switch"><input type="checkbox" id="chk-activer-sumup" onchange="toggleBoutonSumUp()"><span class="slider"></span></label>
-            </div>
-            <div class="config-item">
-                <label for="chk-activer-offert">Activer les pertes & offerts (🎁)</label>
-                <label class="switch"><input type="checkbox" id="chk-activer-offert" onchange="toggleBoutonOffert()"><span class="slider"></span></label>
-            </div>
-            <div class="config-item">
-                <label for="chk-activer-rendu">Activer l'assistant rendu de monnaie</label>
-                <label class="switch"><input type="checkbox" id="chk-activer-rendu" onchange="toggleRenduMonnaie()"><span class="slider"></span></label>
-            </div>
-            <div class="config-item">
-                <label for="chk-mode-sombre">Activer mode sombre</label>
-                <label class="switch"><input type="checkbox" id="chk-mode-sombre" onchange="toggleModeSombre()"><span class="slider"></span></label>
-            </div>
-            <div class="config-item">
-                <label for="chk-activer-stocks">Activer le suivi des stocks</label>
-                <label class="switch"><input type="checkbox" id="chk-activer-stocks" onchange="toggleGestionStocks()"><span class="slider"></span></label>
-            </div>
-            <div class="config-item config-item-sub" id="wrapper-sub-master" style="display: none;">
-                <label for="chk-mode-master" style="color: #f1c40f; font-weight: bold;">👑 Mode Caisse Centrale (Master)</label>
-                <label class="switch">
-                    <input type="checkbox" id="chk-mode-master" onchange="toggleModeMaster()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
 
-        <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms, Stocks...)</button>
-        <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
-        <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
+            <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms, Stocks...)</button>
+            <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
+            <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
+        </div>
     </div>
 
     <div id="modal-article" class="modal-qr">
@@ -537,6 +554,14 @@
         const blockSyncReseau = document.getElementById('block-synchronisation-reseau');
         const gridProduitsEl = document.getElementById('grid-produits');
 
+        // Fonction pour piloter l'ouverture / fermeture des blocs repliables
+        function toggleBlocRepliable(idBloc) {
+            const bloc = document.getElementById(idBloc);
+            if (bloc) {
+                bloc.classList.toggle('ouvert');
+            }
+        }
+
         function chargerBaseArticles() {
             let catalogueSauvegarde = localStorage.getItem('catalogue_articles');
             if (catalogueSauvegarde) {
@@ -567,7 +592,7 @@
             if (modeEditionArticleActif) {
                 let btnAjout = document.createElement('button');
                 btnAjout.className = 'btn-produit'; btnAjout.style.backgroundColor = '#2ecc71'; btnAjout.style.border = '3px dashed white';
-                btnAjout.onclick = () => ouvrirModalArticle();
+                btnAjout.onclick = () => abrirModalArticle();
                 btnAjout.innerHTML = `<span class="icon">➕</span><span>Ajouter un Article</span><span class="prix-tag">Nouveau</span>`;
                 gridProduitsEl.appendChild(btnAjout);
             }
@@ -585,6 +610,33 @@
                     <span class="prix-tag">${prod.prix.toFixed(2)} €</span>
                 `;
                 gridProduitsEl.appendChild(btn);
+            }
+        }
+
+        function abrirModalArticle(nom = "") {
+            document.getElementById('modal-article').style.display = 'flex';
+            
+            const gestionStocksActivee = chkActiverStocks.checked;
+            document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
+
+            if (nom) {
+                document.getElementById('modal-article-titre').textContent = "Modifier l'article";
+                document.getElementById('form-old-id').value = nom;
+                document.getElementById('form-libelle').value = nom;
+                document.getElementById('form-prix').value = catalogueProduits[nom].prix;
+                document.getElementById('form-cat').value = catalogueProduits[nom].cat;
+                document.getElementById('form-stock').value = catalogueProduits[nom].stock !== undefined ? catalogueProduits[nom].stock : 100;
+                document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
+                document.getElementById('btn-form-supprimer').style.display = 'block';
+            } else {
+                document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
+                document.getElementById('form-old-id').value = "";
+                document.getElementById('form-libelle').value = "";
+                document.getElementById('form-prix').value = "";
+                document.getElementById('form-cat').value = "boisson";
+                document.getElementById('form-stock').value = 100;
+                document.getElementById('form-icon').value = "🥤";
+                document.getElementById('btn-form-supprimer').style.display = 'none';
             }
         }
 
@@ -716,33 +768,6 @@
             appliquerGestionStocks();
         }
 
-        function ouvrirModalArticle(nom = "") {
-            document.getElementById('modal-article').style.display = 'flex';
-            
-            const gestionStocksActivee = chkActiverStocks.checked;
-            document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
-
-            if (nom) {
-                document.getElementById('modal-article-titre').textContent = "Modifier l'article";
-                document.getElementById('form-old-id').value = nom;
-                document.getElementById('form-libelle').value = nom;
-                document.getElementById('form-prix').value = catalogueProduits[nom].prix;
-                document.getElementById('form-cat').value = catalogueProduits[nom].cat;
-                document.getElementById('form-stock').value = catalogueProduits[nom].stock !== undefined ? catalogueProduits[nom].stock : 100;
-                document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
-                document.getElementById('btn-form-supprimer').style.display = 'block';
-            } else {
-                document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
-                document.getElementById('form-old-id').value = "";
-                document.getElementById('form-libelle').value = "";
-                document.getElementById('form-prix').value = "";
-                document.getElementById('form-cat').value = "boisson";
-                document.getElementById('form-stock').value = 100;
-                document.getElementById('form-icon').value = "🥤";
-                document.getElementById('btn-form-supprimer').style.display = 'none';
-            }
-        }
-
         function fermerModalArticle() { document.getElementById('modal-article').style.display = 'none'; }
 
         function sauvegarderFormulaireArticle() {
@@ -790,7 +815,7 @@
 
         function gererClicProduit(nom, prix, event) {
             if (modeEditionArticleActif) {
-                event.preventDefault(); ouvrirModalArticle(nom);
+                event.preventDefault(); abrirModalArticle(nom);
             } else { 
                 ajouterAuTicket(nom, prix); 
             }
@@ -856,7 +881,6 @@
 
         function annulerTicket() { if (ticketActuel.size > 0 && confirm("Annuler le ticket en cours ?")) { ticketActuel.clear(); localStorage.removeItem('ticket_actuel'); mettreAJourTicket(); } }
 
-        // Fonctions spécifiques de gestion de la modale Rendu de monnaie tactile
         function ouvrirModalRendu(totalAPayer) {
             totalTicketRenduGlobal = totalAPayer;
             document.getElementById('rendu-total-a-payer').textContent = totalAPayer.toFixed(2);
@@ -878,7 +902,6 @@
             const valeurARendreEl = document.getElementById('rendu-valeur-a-rendre');
             
             if (inputVal === "") {
-                // Le champ est vide -> Mode Contextuel Intelligent : Appoint
                 txtLabel.textContent = "Monnaie à rendre";
                 valeurARendreEl.textContent = "0.00";
                 containerResultat.className = "rendu-resultat-box success";
@@ -901,7 +924,6 @@
             const difference = sommeRecue - totalTicketRenduGlobal;
             
             if (difference < 0) {
-                // Somme insuffisante -> Verrouillage de sécurité automatique
                 txtLabel.textContent = "Il manque encore";
                 valeurARendreEl.textContent = Math.abs(difference).toFixed(2);
                 containerResultat.className = "rendu-resultat-box danger";
@@ -914,7 +936,6 @@
                 btnValider.textContent = "Valider la transaction";
                 btnValider.disabled = false;
             } else {
-                // Somme supérieure -> Calcul à rendre exact
                 txtLabel.textContent = "Monnaie exacte à rendre";
                 valeurARendreEl.textContent = difference.toFixed(2);
                 containerResultat.className = "rendu-resultat-box info";
@@ -935,7 +956,6 @@
             if (ticketActuel.size === 0) return;
             let totalTicket = 0; ticketActuel.forEach((p) => { totalTicket += p.prix * p.quantite; });
 
-            // Remplacement des prompteurs natifs obsolètes par la nouvelle logique de modale asynchrone
             if (!viaCarte && !viaOffert && chkActiverRendu.checked) {
                 cbFinValidationTicket = function(continuer) {
                     if (continuer) {
