@@ -491,18 +491,20 @@
         let cbFinValidationTicket = null;
 
         const BIBLIOTHEQUE_EMOJIS = [
-            '🥤', '🍺', '☕', '💧', '🍹', '🍷', 
-            '🥖', '🍟', '🥪', '🌭', '🍕', '🍔', 
+            '🥤', '🍺', '☕', '💧', '🍹', '🍷', '🍾', 
+            '🥖', '🌭', '🍟', '🥪', '🌭', '🍕', '🍔', 
             '🥞', '🧇', '🍦', '🍩', '🍫', '🍬', 
             '♻️', '🎟️', '🎈', '🎲', '🎁', '📦'  
         ];
 
         const CATALOGUE_PAR_DEFAUT = {
-            'Boisson': { prix: 2.00, cat: 'boisson', icon: '🥤', stock: 100 },
+            'Soft': { prix: 2.00, cat: 'boisson', icon: '🥤', stock: 100 },
             'Bière': { prix: 3.00, cat: 'boisson', icon: '🍺', stock: 120 },
+            'Verre de vin': { prix: 2.50, cat: 'boisson', icon: '🍷', stock: 200 },
+            'Bouteille de vin': { prix: 15.00, cat: 'boisson', icon: '🍷', stock: 20 },
             'Eau': { prix: 1.50, cat: 'boisson', icon: '💧', stock: 60 },
-            'Sandwich': { prix: 4.50, cat: 'snack', icon: '🥖', stock: 50 },
-            'Frites': { prix: 2.50, cat: 'snack', icon: '🍟', stock: 80 },
+            'Sandwich': { prix: 4.50, cat: 'snack', icon: '🌭', stock: 50 },
+            'Frites': { prix: 3.00, cat: 'snack', icon: '🍟', stock: 80 },
             'Crêpe': { prix: 2.00, cat: 'sucre', icon: '🥞', stock: 100 },
             'Gaufre': { prix: 2.50, cat: 'sucre', icon: '🧇', stock: 60 },
             'Glace': { prix: 2.00, cat: 'sucre', icon: '🍦', stock: 40 },
