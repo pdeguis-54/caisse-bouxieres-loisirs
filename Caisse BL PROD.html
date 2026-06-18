@@ -500,6 +500,7 @@
         const CATALOGUE_PAR_DEFAUT = {
             'Soft': { prix: 2.00, cat: 'boisson', icon: '🥤', stock: 100 },
             'Bière': { prix: 3.00, cat: 'boisson', icon: '🍺', stock: 120 },
+            'Bière + Ecocup': { prix: 4.00, cat: 'boisson', icon: '🍺 + ♻️', stock: 120 },
             'Verre de vin': { prix: 2.50, cat: 'boisson', icon: '🍷', stock: 200 },
             'Bouteille de vin': { prix: 15.00, cat: 'boisson', icon: '🍷', stock: 20 },
             'Eau': { prix: 1.50, cat: 'boisson', icon: '💧', stock: 60 },
@@ -508,7 +509,7 @@
             'Crêpe': { prix: 2.00, cat: 'sucre', icon: '🥞', stock: 100 },
             'Gaufre': { prix: 2.50, cat: 'sucre', icon: '🧇', stock: 60 },
             'Glace': { prix: 2.00, cat: 'sucre', icon: '🍦', stock: 40 },
-            'Consigne Ecocup': { prix: 1.00, cat: 'all', icon: '♻️', stock: 200 },
+            'Consigne Ecocup': { prix: 1.00, cat: 'all', icon: '♻️', stock: 520 },
             'Café': { prix: 1.00, cat: 'boisson', icon: '☕', stock: 150 }
         };
 
@@ -556,7 +557,6 @@
         const blockSyncReseau = document.getElementById('block-synchronisation-reseau');
         const gridProduitsEl = document.getElementById('grid-produits');
 
-        // Fonction pour piloter l'ouverture / fermeture des blocs repliables
         function toggleBlocRepliable(idBloc) {
             const bloc = document.getElementById(idBloc);
             if (bloc) {
@@ -855,6 +855,34 @@
             } else { ticketActuel.set(nom, { prix: prix, quantite: qteAAjouter }); }
 
             localStorage.setItem('ticket_actuel', JSON.stringify(Array.from(ticketActuel.entries())));
+            
+            // --- AJOUT DE LA BULLE DE VALIDATION TEMPORAIRE (TOAST) ---
+            let toast = document.createElement('div');
+            let iconeProduit = catalogueProduits[nom]?.icon || '🛒';
+            toast.textContent = `${iconeProduit} ${nom} (x${qteAAjouter}) ajouté au panier`;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = 'var(--success)';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '30px';
+            toast.style.fontSize = '1.05rem';
+            toast.style.fontWeight = 'bold';
+            toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            toast.style.zIndex = '3000';
+            toast.style.pointerEvents = 'none'; // Permet de continuer à cliquer "à travers" la bulle sans gêne
+            toast.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 10px)';
+                setTimeout(() => toast.remove(), 200);
+            }, 1000);
+            // ----------------------------------------------------------
+
             multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs(); mettreAJourTicket();
         }
 
@@ -867,6 +895,12 @@
             mettreAJourTicket();
         }
 
+        function supprimerLigneDuTicket(nom) {
+            if (ticketActuel.has(nom)) { ticketActuel.delete(nom); }
+            localStorage.setItem('ticket_actuel', JSON.stringify(Array.from(ticketActuel.entries())));
+            mettreAJourTicket();
+        }
+
         function mettreAJourTicket() {
             ticketEnCoursEl.innerHTML = ''; let total = 0;
             if (ticketActuel.size === 0) { ticketEnCoursEl.appendChild(ticketVideEl); } 
@@ -874,7 +908,14 @@
                 ticketActuel.forEach((produit, nom) => {
                     let sousTotal = produit.prix * produit.quantite; total += sousTotal;
                     let ligne = document.createElement('div'); ligne.className = 'ligne';
-                    ligne.innerHTML = `<div class="details-produit"><span class="nom-produit">${nom} x${produit.quantite}</span><span class="sous-total">${sousTotal.toFixed(2)} €</span></div><button class="btn-retirer" onclick="retirerDuTicket('${nom}')">-1</button>`;
+                    ligne.innerHTML = `
+                        <div class="details-produit">
+                            <span class="nom-produit">${nom} x${produit.quantite}</span>
+                            <span class="sous-total">${sousTotal.toFixed(2)} €</span>
+                        </div>
+                        <button class="btn-retirer" style="background-color: #7f8c8d; margin-right: 4px;" onclick="retirerDuTicket('${nom}')">-1</button>
+                        <button class="btn-retirer" onclick="supprimerLigneDuTicket('${nom}')">🗑️</button>
+                    `;
                     ticketEnCoursEl.prepend(ligne);
                 });
             }
@@ -997,6 +1038,33 @@
             logoOverlay.classList.add('visible'); setTimeout(() => { logoOverlay.classList.remove('visible'); }, 1100);
 
             ticketActuel.clear(); localStorage.removeItem('ticket_actuel'); mettreAJourTicket(); mettreAJourSuiviGlobal();
+        }
+
+        function abrirModalArticle(nom = "") {
+            document.getElementById('modal-article').style.display = 'flex';
+            
+            const gestionStocksActivee = chkActiverStocks.checked;
+            document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
+
+            if (nom) {
+                document.getElementById('modal-article-titre').textContent = "Modifier l'article";
+                document.getElementById('form-old-id').value = nom;
+                document.getElementById('form-libelle').value = nom;
+                document.getElementById('form-prix').value = catalogueProduits[nom].prix;
+                document.getElementById('form-cat').value = catalogueProduits[nom].cat;
+                document.getElementById('form-stock').value = catalogueProduits[nom].stock !== undefined ? catalogueProduits[nom].stock : 100;
+                document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
+                document.getElementById('btn-form-supprimer').style.display = 'block';
+            } else {
+                document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
+                document.getElementById('form-old-id').value = "";
+                document.getElementById('form-libelle').value = "";
+                document.getElementById('form-prix').value = "";
+                document.getElementById('form-cat').value = "boisson";
+                document.getElementById('form-stock').value = 100;
+                document.getElementById('form-icon').value = "🥤";
+                document.getElementById('btn-form-supprimer').style.display = 'none';
+            }
         }
 
         function annulerDerniereVente() {
