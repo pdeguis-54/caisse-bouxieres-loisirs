@@ -141,6 +141,7 @@
         /* Modale Plein Écran */
         .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 10px; box-sizing: border-box; }
         .modal-qr-content { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: #333; width: 100%; max-width: 340px; box-sizing: border-box; }
+        body.dark-theme .modal-qr-content { color: #333333; } /* Forcer la lisibilité des inputs de formulaire dans la modale */
         .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         #reader { width: 100%; max-width: 400px; background: black; border-radius: 12px; overflow: hidden; }
 
@@ -212,6 +213,62 @@
         #cancel-overlay { background-color: rgba(230, 126, 34, 0.9); }
         #logo-overlay.visible, #cancel-overlay.visible { opacity: 1; }
         .footer { text-align: center; color: #95a5a6; font-size: 0.8rem; margin-top: 30px; margin-bottom: 10px; }
+
+        /* Styles spécifiques pour le nouvel Assistant Rendu Monnaie */
+        .modal-rendu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 2500;
+            display: none; align-items: center; justify-content: center; pading: 10px; box-sizing: border-box;
+        }
+        .modal-rendu-box {
+            background: var(--bg-block-caisse);
+            color: var(--text-block-caisse);
+            width: 100%; max-width: 360px;
+            padding: 20px; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+            animation: pop-rendu 0.2s ease-out;
+        }
+        @keyframes pop-rendu {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .rendu-header { text-align: center; margin-bottom: 15px; }
+        .rendu-header h3 { margin: 0; font-size: 1.3rem; color: var(--primary); }
+        body.dark-theme .rendu-header h3 { color: #fff; }
+        .rendu-total-badge {
+            background: rgba(231, 76, 60, 0.1); color: var(--danger);
+            padding: 8px; border-radius: 8px; font-weight: bold;
+            font-size: 1.2rem; text-align: center; margin-top: 10px;
+        }
+        body.dark-theme .rendu-total-badge { background: rgba(231, 76, 60, 0.2); color: #ff6b6b; }
+        .rendu-body { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+        .rendu-body label { font-weight: bold; font-size: 0.9rem; }
+        .rendu-input-wrapper { position: relative; }
+        .rendu-input {
+            width: 100%; padding: 12px 35px 12px 12px; border-radius: 8px;
+            border: 2px solid var(--border-ligne); font-size: 1.4rem; font-weight: bold;
+            box-sizing: border-box; background: var(--bg-body); color: var(--text-body);
+            text-align: right; inputmode: decimal;
+        }
+        .rendu-input:focus { border-color: var(--primary); outline: none; }
+        .rendu-currency-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; font-weight: bold; color: #7f8c8d; }
+        .rendu-resultat-box {
+            background: #f8f9fa; border-radius: 8px; padding: 12px;
+            text-align: center; border: 1px solid var(--border-ligne); transition: background 0.2s;
+        }
+        body.dark-theme .rendu-resultat-box { background: rgba(255,255,255,0.05); }
+        .rendu-resultat-label { font-size: 0.85rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rendu-resultat-valeur { font-size: 1.8rem; font-weight: bold; margin-top: 4px; }
+        .rendu-resultat-box.success .rendu-resultat-valeur { color: var(--success); }
+        .rendu-resultat-box.danger .rendu-resultat-valeur { color: var(--danger); }
+        .rendu-resultat-box.info .rendu-resultat-valeur { color: var(--warning); }
+        
+        .rendu-actions { display: flex; gap: 10px; }
+        .btn-rendu { flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: opacity 0.1s; -webkit-appearance: none; }
+        .btn-rendu-valider { background: var(--success); color: white; }
+        .btn-rendu-valider:disabled { background: #7f8c8d; opacity: 0.4; cursor: not-allowed; }
+        .btn-rendu-annuler { background: #95a5a6; color: white; max-width: 90px; }
     </style>
 </head>
 <body>
@@ -356,6 +413,30 @@
         <button class="btn-close-modal" onclick="fermerModalArticle()">Annuler</button>
     </div>
 
+    <div id="modal-rendu-monnaie" class="modal-rendu">
+        <div class="modal-rendu-box">
+            <div class="rendu-header">
+                <h3>Assistant Rendu de Monnaie</h3>
+                <div class="rendu-total-badge">Total à payer : <span id="rendu-total-a-payer">0.00</span> €</div>
+            </div>
+            <div class="rendu-body">
+                <label for="rendu-somme-recue">Somme donnée par le client :</label>
+                <div class="rendu-input-wrapper">
+                    <input type="number" id="rendu-somme-recue" class="rendu-input" placeholder="0.00" step="0.01" min="0" oninput="calculerRenduEnTempsReel()">
+                    <span class="rendu-currency-tag">€</span>
+                </div>
+                <div id="rendu-container-resultat" class="rendu-resultat-box success">
+                    <span id="rendu-txt-label" class="rendu-resultat-label">Monnaie à rendre</span>
+                    <div class="rendu-resultat-valeur"><span id="rendu-valeur-a-rendre">0.00</span> €</div>
+                </div>
+            </div>
+            <div class="rendu-actions">
+                <button id="btn-rendu-annuler" class="btn-rendu btn-rendu-annuler" onclick="fermerModalRendu(false)">Retour</button>
+                <button id="btn-rendu-valider" class="btn-rendu btn-rendu-valider" onclick="fermerModalRendu(true)">L'appoint (Valider)</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-generateur" class="modal-qr">
         <h3 id="modal-gen-titre" style="margin-top:0; text-align:center;">QR Code de Synchro</h3>
         <p id="modal-gen-desc" style="text-align:center; font-size:0.9rem; color:#bdc3c7; max-width: 320px; margin-bottom: 15px;"></p>
@@ -387,6 +468,10 @@
         let multiplicateurEnCours = 1;
         let modeEditionArticleActif = false;
         let html5QrcodeScanner = null;
+        
+        // Variables globales spécifiques à la promesse de rendu monnaie
+        let totalTicketRenduGlobal = 0;
+        let cbFinValidationTicket = null;
 
         const BIBLIOTHEQUE_EMOJIS = [
             '🥤', '🍺', '☕', '💧', '🍹', '🍷', 
@@ -634,7 +719,6 @@
         function ouvrirModalArticle(nom = "") {
             document.getElementById('modal-article').style.display = 'flex';
             
-            // Affichage conditionnel de la ligne stock selon l'option globale de suivi des stocks
             const gestionStocksActivee = chkActiverStocks.checked;
             document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
 
@@ -668,7 +752,6 @@
             let cat = document.getElementById('form-cat').value;
             let icon = document.getElementById('form-icon').value.trim() || "📦";
             
-            // Récupère le stock saisi (ou conserve l'ancien/valeur par défaut si non visible)
             let nouveauStock = parseInt(document.getElementById('form-stock').value);
             if (isNaN(nouveauStock) || nouveauStock < 0) nouveauStock = 0;
 
@@ -773,18 +856,99 @@
 
         function annulerTicket() { if (ticketActuel.size > 0 && confirm("Annuler le ticket en cours ?")) { ticketActuel.clear(); localStorage.removeItem('ticket_actuel'); mettreAJourTicket(); } }
 
+        // Fonctions spécifiques de gestion de la modale Rendu de monnaie tactile
+        function ouvrirModalRendu(totalAPayer) {
+            totalTicketRenduGlobal = totalAPayer;
+            document.getElementById('rendu-total-a-payer').textContent = totalAPayer.toFixed(2);
+            
+            const inputSomme = document.getElementById('rendu-somme-recue');
+            inputSomme.value = "";
+            
+            calculerRenduEnTempsReel();
+            
+            document.getElementById('modal-rendu-monnaie').style.display = 'flex';
+            setTimeout(() => { inputSomme.focus(); }, 100);
+        }
+
+        function calculerRenduEnTempsReel() {
+            const inputVal = document.getElementById('rendu-somme-recue').value.replace(',', '.');
+            const btnValider = document.getElementById('btn-rendu-valider');
+            const containerResultat = document.getElementById('rendu-container-resultat');
+            const txtLabel = document.getElementById('rendu-txt-label');
+            const valeurARendreEl = document.getElementById('rendu-valeur-a-rendre');
+            
+            if (inputVal === "") {
+                // Le champ est vide -> Mode Contextuel Intelligent : Appoint
+                txtLabel.textContent = "Monnaie à rendre";
+                valeurARendreEl.textContent = "0.00";
+                containerResultat.className = "rendu-resultat-box success";
+                btnValider.textContent = "L'appoint (Valider)";
+                btnValider.disabled = false;
+                return;
+            }
+            
+            const sommeRecue = parseFloat(inputVal);
+            
+            if (isNaN(sommeRecue) || sommeRecue < 0) {
+                txtLabel.textContent = "Somme invalide";
+                valeurARendreEl.textContent = "0.00";
+                containerResultat.className = "rendu-resultat-box danger";
+                btnValider.textContent = "Somme incorrecte";
+                btnValider.disabled = true;
+                return;
+            }
+            
+            const difference = sommeRecue - totalTicketRenduGlobal;
+            
+            if (difference < 0) {
+                // Somme insuffisante -> Verrouillage de sécurité automatique
+                txtLabel.textContent = "Il manque encore";
+                valeurARendreEl.textContent = Math.abs(difference).toFixed(2);
+                containerResultat.className = "rendu-resultat-box danger";
+                btnValider.textContent = "Montant insuffisant";
+                btnValider.disabled = true;
+            } else if (difference === 0) {
+                txtLabel.textContent = "Compte juste (Pas de monnaie)";
+                valeurARendreEl.textContent = "0.00";
+                containerResultat.className = "rendu-resultat-box success";
+                btnValider.textContent = "Valider la transaction";
+                btnValider.disabled = false;
+            } else {
+                // Somme supérieure -> Calcul à rendre exact
+                txtLabel.textContent = "Monnaie exacte à rendre";
+                valeurARendreEl.textContent = difference.toFixed(2);
+                containerResultat.className = "rendu-resultat-box info";
+                btnValider.textContent = "Confirmer le rendu";
+                btnValider.disabled = false;
+            }
+        }
+
+        function fermerModalRendu(doitValider) {
+            document.getElementById('modal-rendu-monnaie').style.display = 'none';
+            if (cbFinValidationTicket) {
+                cbFinValidationTicket(doitValider);
+                cbFinValidationTicket = null;
+            }
+        }
+
         function validerTicket(viaCarte = false, viaOffert = false) {
             if (ticketActuel.size === 0) return;
             let totalTicket = 0; ticketActuel.forEach((p) => { totalTicket += p.prix * p.quantite; });
 
+            // Remplacement des prompteurs natifs obsolètes par la nouvelle logique de modale asynchrone
             if (!viaCarte && !viaOffert && chkActiverRendu.checked) {
-                let saisieClient = prompt(`💵 TOTAL À PAYER : ${totalTicket.toFixed(2)} €\nEntrez la somme donnée par le client :`);
-                if (saisieClient) {
-                    let sommeDonnee = parseFloat(saisieClient.replace(',', '.'));
-                    if (!isNaN(sommeDonnee) && sommeDonnee >= totalTicket) alert(`🪙 MONNAIE À RENDRE :\n\n👉 ${(sommeDonnee - totalTicket).toFixed(2)} €`);
-                }
+                cbFinValidationTicket = function(continuer) {
+                    if (continuer) {
+                        procederEnregistrementTicket(totalTicket, viaCarte, viaOffert);
+                    }
+                };
+                ouvrirModalRendu(totalTicket);
+            } else {
+                procederEnregistrementTicket(totalTicket, viaCarte, viaOffert);
             }
+        }
 
+        function procederEnregistrementTicket(totalTicket, viaCarte, viaOffert) {
             if (viaCarte && chkActiverSumUp.checked) {
                 window.location.href = `sumupmerchant://pay/1.0?amount=${totalTicket.toFixed(2)}&currency=EUR&title=Bouxieres%20Loisirs&affiliate-key=application&payment-options=tap-to-pay`;
             }
