@@ -85,9 +85,16 @@
         .btn-produit:disabled { opacity: 0.3; cursor: not-allowed; }
         
         body.edit-stock-mode .btn-produit { background-color: var(--warning) !important; animation: pulse-edit 1.5s infinite ease-in-out; }
+        body.edit-article-mode .btn-produit { background-color: #9b59b6 !important; animation: pulse-article-edit 1.5s infinite ease-in-out; }
+        
         @keyframes pulse-edit {
             0% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
             50% { box-shadow: 0 0 10px rgba(230, 126, 34, 0.6); }
+            100% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        }
+        @keyframes pulse-article-edit {
+            0% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 0 10px rgba(155, 89, 182, 0.6); }
             100% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         }
 
@@ -137,11 +144,51 @@
         .btn-sync-send { background-color: #e67e22; }
         .btn-sync-receive { background-color: #2ecc71; }
         
-        /* Modale Plein Écran pour Scanner et afficher QR */
-        .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px; box-sizing: border-box; }
-        .modal-qr-content { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* Modale Plein Écran pour Scanner, afficher QR et Formulaires */
+        .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 10px; box-sizing: border-box; }
+        .modal-qr-content { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: #333; width: 100%; max-width: 340px; box-sizing: border-box; }
         .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         #reader { width: 100%; max-width: 400px; background: black; border-radius: 12px; overflow: hidden; }
+
+        /* Formulaire Édition Article */
+        .form-article { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .form-article label { font-weight: bold; font-size: 0.85rem; color: #333; margin-top: 2px; }
+        .form-article input, .form-article select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+        
+        /* Sélecteur d'émojis intégré */
+        .emoji-picker-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+            padding: 6px;
+            max-height: 95px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        .btn-emoji-select {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            font-size: 1.4rem;
+            padding: 4px 0;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.05s;
+        }
+        .btn-emoji-select:active {
+            transform: scale(0.9);
+            background: #e0e0e0;
+        }
+
+        .form-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .btn-form { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
+        .btn-form-save { background: var(--success); color: white; }
+        .btn-form-delete { background: var(--danger); color: white; }
 
         .block-parametres { background: var(--bg-blocs-bas); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .block-parametres h4 { margin-top: 0; margin-bottom: 12px; color: #f1c40f; border-bottom: 1px solid var(--dark-light); padding-bottom: 8px; font-size: 1.1rem; }
@@ -159,6 +206,8 @@
         .btn-reset { background-color: #95a5a6; color: var(--dark); border: none; width: 100%; padding: 12px; margin-top: 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
         .btn-export { background-color: var(--primary); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
         .btn-stock-refill { background-color: var(--warning); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; display: none; }
+        .btn-article-edit-toggle { background-color: #9b59b6; color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
+        
         .btn-undo { background-color: var(--warning); color: white; border: none; width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; -webkit-appearance: none; }
         .btn-undo:disabled { background-color: #555; color: #888; cursor: not-allowed; opacity: 0.6; }
 
@@ -187,48 +236,7 @@
         <button class="btn-cat" id="cat-sucre" onclick="filtrerCategorie('sucre')">🥞 Sucré</button>
     </div>
 
-    <div class="grid" id="grid-produits">
-        <button class="btn-produit" data-cat="boisson" data-id="Boisson" onclick="gererClicProduit('Boisson', 2.00, event)" oncontextmenu="gererClicDroitProduit('Boisson', event)">
-            <span class="stock-tag" id="stock-Boisson"></span>
-            <span class="icon">🥤</span><span>Soft</span><span class="prix-tag">2.00 €</span>
-        </button>
-        <button class="btn-produit" data-cat="boisson" data-id="Bière" onclick="gererClicProduit('Bière', 3.00, event)" oncontextmenu="gererClicDroitProduit('Bière', event)">
-            <span class="stock-tag" id="stock-Bière"></span>
-            <span class="icon">🍺</span><span>Bière</span><span class="prix-tag">3.00 €</span>
-        </button>
-        <button class="btn-produit" data-cat="boisson" data-id="Eau" onclick="gererClicProduit('Eau', 1.50, event)" oncontextmenu="gererClicDroitProduit('Eau', event)">
-            <span class="stock-tag" id="stock-Eau"></span>
-            <span class="icon">💧</span><span>Eau</span><span class="prix-tag">1.50 €</span>
-        </button>
-        <button class="btn-produit" data-cat="snack" data-id="Sandwich" onclick="gererClicProduit('Sandwich', 4.50, event)" oncontextmenu="gererClicDroitProduit('Sandwich', event)">
-            <span class="stock-tag" id="stock-Sandwich"></span>
-            <span class="icon">🥖</span><span>Sandwich</span><span class="prix-tag">4.50 €</span>
-        </button>
-        <button class="btn-produit" data-cat="snack" data-id="Frites" onclick="gererClicProduit('Frites', 2.50, event)" oncontextmenu="gererClicDroitProduit('Frites', event)">
-            <span class="stock-tag" id="stock-Frites"></span>
-            <span class="icon">🍟</span><span>Frites</span><span class="prix-tag">2.50 €</span>
-        </button>
-        <button class="btn-produit" data-cat="sucre" data-id="Crêpe" onclick="gererClicProduit('Crêpe', 2.00, event)" oncontextmenu="gererClicDroitProduit('Crêpe', event)">
-            <span class="stock-tag" id="stock-Crêpe"></span>
-            <span class="icon">🥞</span><span>Crêpe</span><span class="prix-tag">2.00 €</span>
-        </button>
-        <button class="btn-produit" data-cat="sucre" data-id="Gaufre" onclick="gererClicProduit('Gaufre', 2.50, event)" oncontextmenu="gererClicDroitProduit('Gaufre', event)">
-            <span class="stock-tag" id="stock-Gaufre"></span>
-            <span class="icon">🧇</span><span>Gaufre</span><span class="prix-tag">2.50 €</span>
-        </button>
-        <button class="btn-produit" data-cat="sucre" data-id="Glace" onclick="gererClicProduit('Glace', 2.00, event)" oncontextmenu="gererClicDroitProduit('Glace', event)">
-            <span class="stock-tag" id="stock-Glace"></span>
-            <span class="icon">🍦</span><span>Glace</span><span class="prix-tag">2.00 €</span>
-        </button>
-        <button class="btn-produit" data-cat="all" data-id="Consigne Ecocup" onclick="gererClicProduit('Consigne Ecocup', 1.00, event)" oncontextmenu="gererClicDroitProduit('Consigne Ecocup', event)">
-            <span class="stock-tag" id="stock-Consigne Ecocup"></span>
-            <span class="icon">♻️</span><span>Consigne Ecocup</span><span class="prix-tag">1.00 €</span>
-        </button>
-        <button class="btn-produit" data-cat="boisson" data-id="Café" onclick="gererClicProduit('Café', 1.00, event)" oncontextmenu="gererClicDroitProduit('Café', event)">
-            <span class="stock-tag" id="stock-Café"></span>
-            <span class="icon">☕</span><span>Café</span><span class="prix-tag">1.00 €</span>
-        </button>
-    </div>
+    <div class="grid" id="grid-produits"></div>
 
     <div class="block-caisse">
         <div class="liste-ticket" id="ticket-en-cours">
@@ -308,8 +316,44 @@
         </div>
 
         <button class="btn-stock-refill" id="btn-refill" onclick="toggleModeEditionStock()">✏️ Ajuster les stocks (Mode Édition)</button>
+        <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms...)</button>
         <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
         <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
+    </div>
+
+    <div id="modal-article" class="modal-qr">
+        <h3 id="modal-article-titre" style="margin-top:0;">Éditer l'article</h3>
+        <div class="modal-qr-content">
+            <div class="form-article">
+                <input type="hidden" id="form-old-id">
+                
+                <label for="form-libelle">Nom de l'article :</label>
+                <input type="text" id="form-libelle" placeholder="Ex: Panini Nutella">
+                
+                <label for="form-prix">Prix de vente (€) :</label>
+                <input type="number" id="form-prix" step="0.05" min="0" placeholder="0.00">
+                
+                <label for="form-cat">Catégorie :</label>
+                <select id="form-cat">
+                    <option value="boisson">🥤 Boisson</option>
+                    <option value="snack">🥖 Snack</option>
+                    <option value="sucre">🥞 Sucré</option>
+                    <option value="all">♻️ Autre / Général</option>
+                </select>
+                
+                <label for="form-icon">Émoticône / Icône :</label>
+                <input type="text" id="form-icon" placeholder="Ex: 🥪" style="text-align: center; font-size: 1.1rem; font-weight: bold;">
+                
+                <label style="color:#7f8c8d; font-size:0.8rem;">Cliquez sur un émoji pour le choisir :</label>
+                <div class="emoji-picker-container" id="emoji-picker-box"></div>
+                
+                <div class="form-actions">
+                    <button class="btn-form btn-form-save" onclick="sauvegarderFormulaireArticle()">Enregistrer</button>
+                    <button class="btn-form btn-form-delete" id="btn-form-supprimer" onclick="supprimerArticleFormulaire()">Supprimer</button>
+                </div>
+            </div>
+        </div>
+        <button class="btn-close-modal" onclick="fermerModalArticle()">Annuler</button>
     </div>
 
     <div id="modal-generateur" class="modal-qr">
@@ -342,31 +386,47 @@
         let dernierTicketValide = null;
         let multiplicateurEnCours = 1;
         let modeEditionStockActif = false;
+        let modeEditionArticleActif = false;
         let html5QrcodeScanner = null;
 
-        // Base de prix fixe pour recalculer sur la caisse centrale (Master)
-        const CATALOGUE_PRIX = {
-            'Boisson': 2.00, 'Bière': 3.00, 'Eau': 1.50, 'Sandwich': 4.50, 'Frites': 2.50,
-            'Crêpe': 2.00, 'Gaufre': 2.50, 'Glace': 2.00, 'Consigne Ecocup': 1.00, 'Café': 1.00
+        // Liste des émojis classés pour la bibliothèque
+        const BIBLIOTHEQUE_EMOJIS = [
+            '🥤', '🍺', '☕', '💧', '🍹', '🍷', // Boissons
+            '🥖', '🍟', '🥪', '🌭', '🍕', '🍔', // Salé
+            '🥞', '🧇', '🍦', '🍩', '🍫', '🍬', // Sucré
+            '♻️', '🎟️', '🎈', '🎲', '🎁', '📦'  // Divers / Événement
+        ];
+
+        // Catalogue par défaut réorganisé (Sert uniquement de base au tout premier démarrage)
+        const CATALOGUE_PAR_DEFAUT = {
+            'Boisson': { prix: 2.00, cat: 'boisson', icon: '🥤', stock: 100 },
+            'Bière': { prix: 3.00, cat: 'boisson', icon: '🍺', stock: 120 },
+            'Eau': { prix: 1.50, cat: 'boisson', icon: '💧', stock: 60 },
+            'Sandwich': { prix: 4.50, cat: 'snack', icon: '🥖', stock: 50 },
+            'Frites': { prix: 2.50, cat: 'snack', icon: '🍟', stock: 80 },
+            'Crêpe': { prix: 2.00, cat: 'sucre', icon: '🥞', stock: 100 },
+            'Gaufre': { prix: 2.50, cat: 'sucre', icon: '🧇', stock: 60 },
+            'Glace': { prix: 2.00, cat: 'sucre', icon: '🍦', stock: 40 },
+            'Consigne Ecocup': { prix: 1.00, cat: 'all', icon: '♻️', stock: 200 },
+            'Café': { prix: 1.00, cat: 'boisson', icon: '☕', stock: 150 }
         };
 
-        let stocksProduits = {
-            'Boisson': 100, 'Bière': 120, 'Eau': 60, 'Sandwich': 50, 'Frites': 80,
-            'Crêpe': 100, 'Gaufre': 60, 'Glace': 40, 'Consigne Ecocup': 200, 'Café': 150
-        };
+        let catalogueProduits = {};
 
-        /* ======================================================= */
-        /* DICOS DE TRADUCTION NUMÉRIQUE <-> CHAÎNE DE CARACTÈRES  */
-        /* ======================================================= */
-        const NOM_VERS_ID = {
-            'Boisson': 1, 'Bière': 2, 'Eau': 3, 'Sandwich': 4, 'Frites': 5,
-            'Crêpe': 6, 'Gaufre': 7, 'Glace': 8, 'Consigne Ecocup': 9, 'Café': 10
-        };
+        /* DICOS DYNAMIQUES DE TRADUCTION NUMÉRIQUE POUR LE QR CODE */
+        let NOM_VERS_ID = {};
+        let ID_VERS_NOM = {};
 
-        const ID_VERS_NOM = {
-            1: 'Boisson', 2: 'Bière', 3: 'Eau', 4: 'Sandwich', 5: 'Frites',
-            6: 'Crêpe', 7: 'Gaufre', 8: 'Glace', 9: 'Consigne Ecocup', 10: 'Café'
-        };
+        function regenererDictionnairesIndex() {
+            NOM_VERS_ID = {};
+            ID_VERS_NOM = {};
+            let index = 1;
+            for (let nom in catalogueProduits) {
+                NOM_VERS_ID[nom] = index;
+                ID_VERS_NOM[index] = nom;
+                index++;
+            }
+        }
 
         const ticketVideEl = document.getElementById('ticket-vide');
         const ticketEnCoursEl = document.getElementById('ticket-en-cours');
@@ -392,12 +452,78 @@
         const chkModeSombre = document.getElementById('chk-mode-sombre');
         const chkActiverStocks = document.getElementById('chk-activer-stocks');
         const btnRefill = document.getElementById('btn-refill');
+        const btnArticleEditToggle = document.getElementById('btn-article-edit');
         const txtStatutBadge = document.getElementById('txt-statut-badge');
         
         const wrapperSubMaster = document.getElementById('wrapper-sub-master');
         const blockSyncReseau = document.getElementById('block-synchronisation-reseau');
+        const gridProduitsEl = document.getElementById('grid-produits');
+
+        function chargerBaseArticles() {
+            let catalogueSauvegarde = localStorage.getItem('catalogue_articles');
+            if (catalogueSauvegarde) {
+                catalogueProduits = JSON.parse(catalogueSauvegarde);
+            } else {
+                catalogueProduits = JSON.parse(JSON.stringify(CATALOGUE_PAR_DEFAUT));
+                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
+            }
+            regenererDictionnairesIndex();
+            genererGrilleProduitsHTML();
+            genererBibliothequeEmojisHTML();
+        }
+
+        // Crée la grille cliquable d'émojis dans le formulaire d'édition
+        function genererBibliothequeEmojisHTML() {
+            const container = document.getElementById('emoji-picker-box');
+            container.innerHTML = '';
+            BIBLIOTHEQUE_EMOJIS.forEach(emoji => {
+                let btnEmoji = document.createElement('button');
+                btnEmoji.type = "button";
+                btnEmoji.className = "btn-emoji-select";
+                btnEmoji.textContent = emoji;
+                btnEmoji.onclick = () => {
+                    document.getElementById('form-icon').value = emoji;
+                };
+                container.appendChild(btnEmoji);
+            });
+        }
+
+        function genererGrilleProduitsHTML() {
+            gridProduitsEl.innerHTML = '';
+            
+            // Si le mode édition d'article est actif, on ajoute un bouton spécial de création en premier
+            if (modeEditionArticleActif) {
+                let btnAjout = document.createElement('button');
+                btnAjout.className = 'btn-produit';
+                btnAjout.style.backgroundColor = '#2ecc71';
+                btnAjout.style.border = '3px dashed white';
+                btnAjout.onclick = () => ouvrirModalArticle();
+                btnAjout.innerHTML = `<span class="icon">➕</span><span>Ajouter un Article</span><span class="prix-tag">Nouveau</span>`;
+                gridProduitsEl.appendChild(btnAjout);
+            }
+
+            for (let nom in catalogueProduits) {
+                let prod = catalogueProduits[nom];
+                let btn = document.createElement('button');
+                btn.className = 'btn-produit';
+                btn.setAttribute('data-cat', prod.cat);
+                btn.setAttribute('data-id', nom);
+                btn.onclick = (e) => gererClicProduit(nom, prod.prix, e);
+                btn.oncontextmenu = (e) => gererClicDroitProduit(nom, e);
+                
+                btn.innerHTML = `
+                    <span class="stock-tag" id="stock-${nom}"></span>
+                    <span class="icon">${prod.icon || '📦'}</span>
+                    <span>${nom}</span>
+                    <span class="prix-tag">${prod.prix.toFixed(2)} €</span>
+                `;
+                gridProduitsEl.appendChild(btn);
+            }
+        }
 
         function initConfiguration() {
+            chargerBaseArticles();
+
             let configMaster = localStorage.getItem('mode_master_actif');
             if (configMaster === null) { configMaster = 'false'; localStorage.setItem('mode_master_actif', 'false'); }
             chkModeMaster.checked = (configMaster === 'true');
@@ -428,9 +554,6 @@
             let configStocks = localStorage.getItem('stocks_actif');
             if (configStocks === null) { configStocks = 'false'; localStorage.setItem('stocks_actif', 'false'); }
             chkActiverStocks.checked = (configStocks === 'true');
-            
-            let stocksSauvegardes = localStorage.getItem('stocks_data');
-            if (stocksSauvegardes) { stocksProduits = JSON.parse(stocksSauvegardes); }
             
             // Restauration du ticket en cours s'il y en a un
             let ticketSauvegarde = localStorage.getItem('ticket_actuel');
@@ -495,12 +618,13 @@
 
             document.querySelectorAll('.btn-produit').forEach(btn => {
                 const id = btn.getAttribute('data-id');
+                if(!id) return; // Ignore le bouton d'ajout d'article
                 const badge = document.getElementById(`stock-${id}`);
                 if (badge) {
                     if (actif) {
-                        badge.style.display = 'block'; badge.textContent = stocksProduits[id];
-                        if (stocksProduits[id] <= 5) { badge.classList.add('low'); } else { badge.classList.remove('low'); }
-                        btn.disabled = (stocksProduits[id] <= 0 && !modeEditionStockActif);
+                        badge.style.display = 'block'; badge.textContent = catalogueProduits[id].stock || 0;
+                        if ((catalogueProduits[id].stock || 0) <= 5) { badge.classList.add('low'); } else { badge.classList.remove('low'); }
+                        btn.disabled = ((catalogueProduits[id].stock || 0) <= 0 && !modeEditionStockActif && !modeEditionArticleActif);
                     } else { badge.style.display = 'none'; btn.disabled = false; }
                 }
             });
@@ -510,30 +634,131 @@
             document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('actif'));
             document.getElementById(`cat-${cat}`).classList.add('actif');
             document.querySelectorAll('.btn-produit').forEach(btn => {
-                btn.style.display = (cat === 'all' || btn.getAttribute('data-cat') === cat || btn.getAttribute('data-cat') === 'all') ? 'flex' : 'none';
+                let prodCat = btn.getAttribute('data-cat');
+                btn.style.display = (cat === 'all' || prodCat === cat || !prodCat) ? 'flex' : 'none';
             });
         }
 
         function toggleModeEditionStock() {
+            if (modeEditionArticleActif) toggleModeEditionArticles(); // Ferme l'autre mode s'il est actif
             modeEditionStockActif = !modeEditionStockActif; multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs();
             if (modeEditionStockActif) {
                 document.body.classList.add('edit-stock-mode'); btnRefill.textContent = "💾 Quitter le Mode Édition (Sauvegarder)"; btnRefill.style.backgroundColor = "var(--success)";
             } else {
                 document.body.classList.remove('edit-stock-mode'); btnRefill.textContent = "✏️ Ajuster les stocks (Mode Édition)"; btnRefill.style.backgroundColor = "var(--warning)";
-                localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
             }
             appliquerGestionStocks();
         }
 
+        function toggleModeEditionArticles() {
+            if (modeEditionStockActif) toggleModeEditionStock(); // Ferme l'édition des stocks si actif
+            modeEditionArticleActif = !modeEditionArticleActif;
+            
+            if (modeEditionArticleActif) {
+                document.body.classList.add('edit-article-mode');
+                btnArticleEditToggle.textContent = "💾 Quitter le Gestionnaire d'Articles";
+                btnArticleEditToggle.style.backgroundColor = "var(--success)";
+            } else {
+                document.body.classList.remove('edit-article-mode');
+                btnArticleEditToggle.textContent = "⚙️ Gérer les Articles (Prix, Noms...)";
+                btnArticleEditToggle.style.backgroundColor = "#9b59b6";
+                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
+                regenererDictionnairesIndex();
+            }
+            genererGrilleProduitsHTML();
+            appliquerGestionStocks();
+        }
+
+        function ouvrirModalArticle(nom = "") {
+            document.getElementById('modal-article').style.display = 'flex';
+            if (nom) {
+                // Modification d'un article existant
+                document.getElementById('modal-article-titre').textContent = "Modifier l'article";
+                document.getElementById('form-old-id').value = nom;
+                document.getElementById('form-libelle').value = nom;
+                document.getElementById('form-prix').value = catalogueProduits[nom].prix;
+                document.getElementById('form-cat').value = catalogueProduits[nom].cat;
+                document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
+                document.getElementById('btn-form-supprimer').style.display = 'block';
+            } else {
+                // Nouvel article
+                document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
+                document.getElementById('form-old-id').value = "";
+                document.getElementById('form-libelle').value = "";
+                document.getElementById('form-prix').value = "";
+                document.getElementById('form-cat').value = "boisson";
+                document.getElementById('form-icon').value = "🥤";
+                document.getElementById('btn-form-supprimer').style.display = 'none';
+            }
+        }
+
+        function fermerModalArticle() {
+            document.getElementById('modal-article').style.display = 'none';
+        }
+
+        function sauvegarderFormulaireArticle() {
+            let oldId = document.getElementById('form-old-id').value;
+            let nouveauLibelle = document.getElementById('form-libelle').value.trim();
+            let prix = parseFloat(document.getElementById('form-prix').value);
+            let cat = document.getElementById('form-cat').value;
+            let icon = document.getElementById('form-icon').value.trim() || "📦";
+
+            if (!nouveauLibelle || isNaN(prix) || prix < 0) {
+                alert("Veuillez saisir un nom et un prix valides !");
+                return;
+            }
+
+            // Conserver le stock existant s'il s'agit d'une modification
+            let stockActuel = (oldId && catalogueProduits[oldId]) ? catalogueProduits[oldId].stock : 100;
+
+            if (oldId && oldId !== nouveauLibelle) {
+                delete catalogueProduits[oldId]; // Supprime l'ancienne clé si le nom a changé
+            }
+
+            catalogueProduits[nouveauLibelle] = {
+                prix: prix,
+                cat: cat,
+                icon: icon,
+                stock: stockActuel
+            };
+
+            localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
+            fermerModalArticle();
+            genererGrilleProduitsHTML();
+            appliquerGestionStocks();
+        }
+
+        function supprimerArticleFormulaire() {
+            let nom = document.getElementById('form-old-id').value;
+            if (nom && confirm(`Supprimer définitivement l'article [${nom}] du catalogue ?`)) {
+                delete catalogueProduits[nom];
+                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
+                fermerModalArticle();
+                genererGrilleProduitsHTML();
+                appliquerGestionStocks();
+            }
+        }
+
         function gererClicProduit(nom, prix, event) {
-            if (modeEditionStockActif) {
-                event.preventDefault(); stocksProduits[nom] = (stocksProduits[nom] || 0) + multiplicateurEnCours; appliquerGestionStocks();
-            } else { ajouterAuTicket(nom, prix); }
+            if (modeEditionArticleActif) {
+                event.preventDefault();
+                ouvrirModalArticle(nom);
+            } else if (modeEditionStockActif) {
+                event.preventDefault(); 
+                catalogueProduits[nom].stock = (catalogueProduits[nom].stock || 0) + multiplicateurEnCours; 
+                appliquerGestionStocks();
+            } else { 
+                ajouterAuTicket(nom, prix); 
+            }
         }
 
         function gererClicDroitProduit(nom, event) {
+            event.preventDefault();
             if (modeEditionStockActif) {
-                event.preventDefault(); stocksProduits[nom] = Math.max(0, (stocksProduits[nom] || 0) - multiplicateurEnCours); appliquerGestionStocks(); return false;
+                catalogueProduits[nom].stock = Math.max(0, (catalogueProduits[nom].stock || 0) - multiplicateurEnCours); 
+                appliquerGestionStocks(); 
+                return false;
             }
         }
 
@@ -553,10 +778,10 @@
             let qteActuelleDansPanier = ticketActuel.has(nom) ? ticketActuel.get(nom).quantite : 0;
             let qteTotaleVoulue = qteActuelleDansPanier + qteAAjouter;
 
-            if (chkActiverStocks.checked && (stocksProduits[nom] < qteTotaleVoulue)) {
-                let disponibleReel = stocksProduits[nom] - qteActuelleDansPanier;
+            if (chkActiverStocks.checked && ((catalogueProduits[nom].stock || 0) < qteTotaleVoulue)) {
+                let disponibleReel = (catalogueProduits[nom].stock || 0) - qteActuelleDansPanier;
                 if (disponibleReel <= 0) {
-                    alert(`Stock insuffisant ! Le stock complet de [${nom}] (${stocksProduits[nom]} unité(s)) est déjà engagé dans le panier.`);
+                    alert(`Stock insuffisant ! Le stock complet de [${nom}] (${catalogueProduits[nom].stock} unité(s)) est déjà engagé dans le panier.`);
                     multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs(); return;
                 } else {
                     alert(`Stock insuffisant pour x${qteAAjouter}.\nAjout automatique du maximum disponible : +${disponibleReel}.`);
@@ -614,8 +839,8 @@
             }
 
             if (chkActiverStocks.checked) {
-                ticketActuel.forEach((p, nom) => { stocksProduits[nom] = Math.max(0, stocksProduits[nom] - p.quantite); });
-                localStorage.setItem('stocks_data', JSON.stringify(stocksProduits)); appliquerGestionStocks();
+                ticketActuel.forEach((p, nom) => { catalogueProduits[nom].stock = Math.max(0, (catalogueProduits[nom].stock || 0) - p.quantite); });
+                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits)); appliquerGestionStocks();
             }
 
             let modeVente = viaCarte ? 'carte' : (viaOffert ? 'offert' : 'especes');
@@ -623,7 +848,7 @@
             
             ticketActuel.forEach((p, nom) => {
                 dernierTicketValide.items.set(nom, { prix: p.prix, quantite: p.quantite });
-                if (ventesGlobales[nom]) { ventsGlobales[nom].quantite += p.quantite; } else { ventesGlobales[nom] = { prix: p.prix, quantite: p.quantite }; }
+                if (ventesGlobales[nom]) { ventesGlobales[nom].quantite += p.quantite; } else { ventesGlobales[nom] = { prix: p.prix, quantite: p.quantite }; }
             });
 
             if (viaCarte) { totalCarte += totalTicket; totalGeneral += totalTicket; } 
@@ -641,8 +866,8 @@
             if (!dernierTicketValide) return;
             if (confirm(`Voulez-vous annuler la DERNIÈRE commande (${dernierTicketValide.montant.toFixed(2)}€) ?`)) {
                 if (chkActiverStocks.checked) {
-                    dernierTicketValide.items.forEach((p, nom) => { stocksProduits[nom] += p.quantite; });
-                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits)); appliquerGestionStocks();
+                    dernierTicketValide.items.forEach((p, nom) => { catalogueProduits[nom].stock += p.quantite; });
+                    localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits)); appliquerGestionStocks();
                 }
                 dernierTicketValide.items.forEach((p, nom) => {
                     if (ventesGlobales[nom]) { ventesGlobales[nom].quantite -= p.quantite; if (ventesGlobales[nom].quantite <= 0) delete ventesGlobales[nom]; }
@@ -679,10 +904,6 @@
             }
         }
 
-        /* ======================================================= */
-        /* LOGIQUE DE SYNCHRONISATION PAR QR CODE EN INDICES NUM   */
-        /* ======================================================= */
-
         function afficherModalGenerateur(titre, description, dataObjet) {
             document.getElementById('modal-gen-titre').textContent = titre;
             document.getElementById('modal-gen-desc').textContent = description;
@@ -700,7 +921,7 @@
                         height: 260,
                         colorDark : "#2c3e50",
                         colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.L // Espace de stockage maximal
+                        correctLevel : QRCode.CorrectLevel.L
                     });
                 } catch (err) {
                     alert("Erreur critique d'encodage : " + err);
@@ -713,7 +934,6 @@
             document.getElementById('qrcode-target').innerHTML = '';
         }
 
-        // ENCODAGE ULTRA COMPACTÉ EN CHIFFRES (Ex: [ [9, 14], [2, 5] ])
         function genererQREnvoiVentes() {
             if (Object.keys(ventesGlobales).length === 0) {
                 alert("Vous n'avez effectué aucune vente. Rien à transmettre !");
@@ -728,10 +948,7 @@
                 }
             }
 
-            const paquet = {
-                t: "V", 
-                v: ventesMinimales 
-            };
+            const paquet = { t: "V", v: ventesMinimales };
 
             afficherModalGenerateur(
                 "🟧 Transmettre mes Ventes",
@@ -742,17 +959,14 @@
 
         function genererQREnvoiStockFrais() {
             let stocksMinimaux = [];
-            for (let nom in stocksProduits) {
+            for (let nom in catalogueProduits) {
                 let idNumerique = NOM_VERS_ID[nom];
                 if (idNumerique) {
-                    stocksMinimaux.push([idNumerique, stocksProduits[nom]]);
+                    stocksMinimaux.push([idNumerique, catalogueProduits[nom].stock || 0]);
                 }
             }
 
-            const paquet = {
-                t: "S", 
-                s: stocksMinimaux 
-            };
+            const paquet = { t: "S", s: stocksMinimaux };
 
             afficherModalGenerateur(
                 "🟩 Déploiement des Stocks Frais",
@@ -813,8 +1027,8 @@
 
                 if (confirm(recapTexte + "\nConfirmer l'intégration de ces ventes dans la Caisse Centrale ?")) {
                     ventesTraduites.forEach(([nom, quantite]) => {
-                        stocksProduits[nom] = Math.max(0, (stocksProduits[nom] || 0) - quantite);
-                        let prixOfficiel = CATALOGUE_PRIX[nom] || 0;
+                        catalogueProduits[nom].stock = Math.max(0, (catalogueProduits[nom].stock || 0) - quantite);
+                        let prixOfficiel = catalogueProduits[nom] ? catalogueProduits[nom].prix : 0;
 
                         if (ventesGlobales[nom]) {
                             ventesGlobales[nom].quantite += quantite;
@@ -824,7 +1038,7 @@
                     });
 
                     recalculerFinancesMasterDepuisVentes();
-                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+                    localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
                     appliquerGestionStocks();
                     mettreAJourSuiviGlobal();
 
@@ -841,16 +1055,14 @@
                 }
 
                 if (confirm("Mettre à jour vos stocks avec les données officielles de la Caisse Centrale ?")) {
-                    let nouveauxStocks = {};
                     paquet.s.forEach(([idNumerique, stock]) => {
                         let nomReel = ID_VERS_NOM[idNumerique];
-                        if (nomReel) {
-                            nouveauxStocks[nomReel] = stock;
+                        if (nomReel && catalogueProduits[nomReel]) {
+                            catalogueProduits[nomReel].stock = stock;
                         }
                     });
                     
-                    stocksProduits = nouveauxStocks;
-                    localStorage.setItem('stocks_data', JSON.stringify(stocksProduits));
+                    localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
                     
                     if(confirm("Voulez-vous réinitialiser votre historique local de ventes sur ce téléphone ?\n(Recommandé pour repartir sur un cycle propre)")) {
                         ventesGlobales = {};
@@ -899,21 +1111,16 @@
             }
         }
 
-        // Blocage physique du geste de pull-to-refresh sur mobile
+        /* Anti-rechargement par geste tactile */
         let touchStartYSynchronized = 0;
         window.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 1) {
-                touchStartYSynchronized = e.touches[0].clientY;
-            }
+            if (e.touches.length === 1) { touchStartYSynchronized = e.touches[0].clientY; }
         }, { passive: false });
 
         window.addEventListener('touchmove', function (e) {
             let touchY = e.touches[0].clientY;
             let touchMoveY = touchY - touchStartYSynchronized;
-            
-            if (window.scrollY === 0 && touchMoveY > 0) {
-                e.preventDefault();
-            }
+            if (window.scrollY === 0 && touchMoveY > 0) { e.preventDefault(); }
         }, { passive: false });
 
         initConfiguration();
