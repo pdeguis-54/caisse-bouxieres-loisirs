@@ -57,6 +57,7 @@
             -webkit-user-select: none; 
             user-select: none;
             transition: background-color 0.2s, color 0.2s;
+            overscroll-behavior-y: contain; /* Empêche le pull-to-refresh sur mobile */
         }
         h1 { text-align: center; color: var(--dark); margin-bottom: 5px; font-size: 1.8rem; }
         body.dark-theme h1 { color: #ffffff; }
@@ -397,6 +398,15 @@
         const wrapperSubMaster = document.getElementById('wrapper-sub-master');
         const blockSyncReseau = document.getElementById('block-synchronisation-reseau');
 
+        function sauvegarderDonneesSession() {
+            localStorage.setItem('ventes_globales', JSON.stringify(ventesGlobales));
+            localStorage.setItem('total_general', totalGeneral.toString());
+            localStorage.setItem('total_especes', totalEspeces.toString());
+            localStorage.setItem('total_carte', totalCarte.toString());
+            localStorage.setItem('total_offert', totalOffert.toString());
+            localStorage.setItem('ticket_actuel', JSON.stringify(Array.from(ticketActuel.entries())));
+        }
+
         function initConfiguration() {
             let configMaster = localStorage.getItem('mode_master_actif');
             if (configMaster === null) { configMaster = 'false'; localStorage.setItem('mode_master_actif', 'false'); }
@@ -431,6 +441,19 @@
             
             let stocksSauvegardes = localStorage.getItem('stocks_data');
             if (stocksSauvegardes) { stocksProduits = JSON.parse(stocksSauvegardes); }
+            
+            // Restauration de l'historique financier et des ventes
+            let ventesSauvegardees = localStorage.getItem('ventes_globales');
+            if (ventesSauvegardees) { ventesGlobales = JSON.parse(ventesSauvegardees); }
+
+            totalGeneral = parseFloat(localStorage.getItem('total_general') || '0');
+            totalEspeces = parseFloat(localStorage.getItem('total_especes') || '0');
+            totalCarte = parseFloat(localStorage.getItem('total_carte') || '0');
+            totalOffert = parseFloat(localStorage.getItem('total_offert') || '0');
+
+            // Restauration du ticket en cours
+            let ticketSauvegarde = localStorage.getItem('ticket_actuel');
+            if (ticketSauvegarde) { ticketActuel = new Map(JSON.parse(ticketSauvegarde)); }
             
             appliquerGestionStocks();
             appliquerInterfaceMasterSatellite();
@@ -586,6 +609,7 @@
                 });
             }
             totalTicketEl.textContent = total.toFixed(2) + ' €';
+            sauvegarderDonneesSession();
         }
 
         function annulerTicket() { if (ticketActuel.size > 0 && confirm("Annuler le ticket en cours ?")) { ticketActuel.clear(); mettreAJourTicket(); } }
@@ -663,6 +687,7 @@
             totalEspecesEl.textContent = totalEspeces.toFixed(2) + ' €';
             totalCarteEl.textContent = totalCarte.toFixed(2) + ' €';
             totalOffertEl.textContent = totalOffert.toFixed(2) + ' €';
+            sauvegarderDonneesSession();
         }
 
         function reinitialiserTout() {
@@ -891,6 +916,13 @@
                 document.body.appendChild(lien); lien.click(); document.body.removeChild(lien);
             }
         }
+
+        window.addEventListener('beforeunload', function (e) {
+            if (ticketActuel && ticketActuel.size > 0) {
+                e.preventDefault();
+                e.returnValue = 'Un ticket est en cours de saisie. Voulez-vous vraiment quitter ?';
+            }
+        });
 
         initConfiguration();
         mettreAJourTicket();
