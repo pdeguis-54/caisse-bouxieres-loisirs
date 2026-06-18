@@ -84,14 +84,8 @@
         .btn-produit:active { background-color: var(--primary-dark); transform: scale(0.96); }
         .btn-produit:disabled { opacity: 0.3; cursor: not-allowed; }
         
-        body.edit-stock-mode .btn-produit { background-color: var(--warning) !important; animation: pulse-edit 1.5s infinite ease-in-out; }
         body.edit-article-mode .btn-produit { background-color: #9b59b6 !important; animation: pulse-article-edit 1.5s infinite ease-in-out; }
         
-        @keyframes pulse-edit {
-            0% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            50% { box-shadow: 0 0 10px rgba(230, 126, 34, 0.6); }
-            100% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        }
         @keyframes pulse-article-edit {
             0% { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
             50% { box-shadow: 0 0 10px rgba(155, 89, 182, 0.6); }
@@ -144,7 +138,7 @@
         .btn-sync-send { background-color: #e67e22; }
         .btn-sync-receive { background-color: #2ecc71; }
         
-        /* Modale Plein Écran pour Scanner, afficher QR et Formulaires */
+        /* Modale Plein Écran */
         .modal-qr { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 10px; box-sizing: border-box; }
         .modal-qr-content { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: #333; width: 100%; max-width: 340px; box-sizing: border-box; }
         .btn-close-modal { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
@@ -155,6 +149,9 @@
         .form-article label { font-weight: bold; font-size: 0.85rem; color: #333; margin-top: 2px; }
         .form-article input, .form-article select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
         
+        /* Conteneur dynamique stock */
+        .form-stock-wrapper { display: flex; flex-direction: column; gap: 4px; }
+
         /* Sélecteur d'émojis intégré */
         .emoji-picker-container {
             border: 1px solid #ddd;
@@ -205,7 +202,6 @@
 
         .btn-reset { background-color: #95a5a6; color: var(--dark); border: none; width: 100%; padding: 12px; margin-top: 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
         .btn-export { background-color: var(--primary); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
-        .btn-stock-refill { background-color: var(--warning); color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; display: none; }
         .btn-article-edit-toggle { background-color: #9b59b6; color: white; border: none; width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; -webkit-appearance: none; }
         
         .btn-undo { background-color: var(--warning); color: white; border: none; width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; -webkit-appearance: none; }
@@ -315,8 +311,7 @@
             </div>
         </div>
 
-        <button class="btn-stock-refill" id="btn-refill" onclick="toggleModeEditionStock()">✏️ Ajuster les stocks (Mode Édition)</button>
-        <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms...)</button>
+        <button class="btn-article-edit-toggle" id="btn-article-edit" onclick="toggleModeEditionArticles()">⚙️ Gérer les Articles (Prix, Noms, Stocks...)</button>
         <button class="btn-export" onclick="exporterBilan()">Partager / Exporter le bilan</button>
         <button class="btn-reset" onclick="reinitialiserTout()">Réinitialiser la journée</button>
     </div>
@@ -340,6 +335,11 @@
                     <option value="sucre">🥞 Sucré</option>
                     <option value="all">♻️ Autre / Général</option>
                 </select>
+
+                <div class="form-stock-wrapper" id="form-stock-row" style="display: none;">
+                    <label for="form-stock">Quantité disponible en stock :</label>
+                    <input type="number" id="form-stock" min="0" step="1" placeholder="100">
+                </div>
                 
                 <label for="form-icon">Émoticône / Icône :</label>
                 <input type="text" id="form-icon" placeholder="Ex: 🥪" style="text-align: center; font-size: 1.1rem; font-weight: bold;">
@@ -385,19 +385,16 @@
         let totalOffert = 0;
         let dernierTicketValide = null;
         let multiplicateurEnCours = 1;
-        let modeEditionStockActif = false;
         let modeEditionArticleActif = false;
         let html5QrcodeScanner = null;
 
-        // Liste des émojis classés pour la bibliothèque
         const BIBLIOTHEQUE_EMOJIS = [
-            '🥤', '🍺', '☕', '💧', '🍹', '🍷', // Boissons
-            '🥖', '🍟', '🥪', '🌭', '🍕', '🍔', // Salé
-            '🥞', '🧇', '🍦', '🍩', '🍫', '🍬', // Sucré
-            '♻️', '🎟️', '🎈', '🎲', '🎁', '📦'  // Divers / Événement
+            '🥤', '🍺', '☕', '💧', '🍹', '🍷', 
+            '🥖', '🍟', '🥪', '🌭', '🍕', '🍔', 
+            '🥞', '🧇', '🍦', '🍩', '🍫', '🍬', 
+            '♻️', '🎟️', '🎈', '🎲', '🎁', '📦'  
         ];
 
-        // Catalogue par défaut réorganisé (Sert uniquement de base au tout premier démarrage)
         const CATALOGUE_PAR_DEFAUT = {
             'Boisson': { prix: 2.00, cat: 'boisson', icon: '🥤', stock: 100 },
             'Bière': { prix: 3.00, cat: 'boisson', icon: '🍺', stock: 120 },
@@ -412,14 +409,11 @@
         };
 
         let catalogueProduits = {};
-
-        /* DICOS DYNAMIQUES DE TRADUCTION NUMÉRIQUE POUR LE QR CODE */
         let NOM_VERS_ID = {};
         let ID_VERS_NOM = {};
 
         function regenererDictionnairesIndex() {
-            NOM_VERS_ID = {};
-            ID_VERS_NOM = {};
+            NOM_VERS_ID = {}; ID_VERS_NOM = {};
             let index = 1;
             for (let nom in catalogueProduits) {
                 NOM_VERS_ID[nom] = index;
@@ -451,7 +445,6 @@
         const chkActiverRendu = document.getElementById('chk-activer-rendu');
         const chkModeSombre = document.getElementById('chk-mode-sombre');
         const chkActiverStocks = document.getElementById('chk-activer-stocks');
-        const btnRefill = document.getElementById('btn-refill');
         const btnArticleEditToggle = document.getElementById('btn-article-edit');
         const txtStatutBadge = document.getElementById('txt-statut-badge');
         
@@ -472,18 +465,13 @@
             genererBibliothequeEmojisHTML();
         }
 
-        // Crée la grille cliquable d'émojis dans le formulaire d'édition
         function genererBibliothequeEmojisHTML() {
             const container = document.getElementById('emoji-picker-box');
             container.innerHTML = '';
             BIBLIOTHEQUE_EMOJIS.forEach(emoji => {
                 let btnEmoji = document.createElement('button');
-                btnEmoji.type = "button";
-                btnEmoji.className = "btn-emoji-select";
-                btnEmoji.textContent = emoji;
-                btnEmoji.onclick = () => {
-                    document.getElementById('form-icon').value = emoji;
-                };
+                btnEmoji.type = "button"; btnEmoji.className = "btn-emoji-select"; btnEmoji.textContent = emoji;
+                btnEmoji.onclick = () => { document.getElementById('form-icon').value = emoji; };
                 container.appendChild(btnEmoji);
             });
         }
@@ -491,12 +479,9 @@
         function genererGrilleProduitsHTML() {
             gridProduitsEl.innerHTML = '';
             
-            // Si le mode édition d'article est actif, on ajoute un bouton spécial de création en premier
             if (modeEditionArticleActif) {
                 let btnAjout = document.createElement('button');
-                btnAjout.className = 'btn-produit';
-                btnAjout.style.backgroundColor = '#2ecc71';
-                btnAjout.style.border = '3px dashed white';
+                btnAjout.className = 'btn-produit'; btnAjout.style.backgroundColor = '#2ecc71'; btnAjout.style.border = '3px dashed white';
                 btnAjout.onclick = () => ouvrirModalArticle();
                 btnAjout.innerHTML = `<span class="icon">➕</span><span>Ajouter un Article</span><span class="prix-tag">Nouveau</span>`;
                 gridProduitsEl.appendChild(btnAjout);
@@ -505,11 +490,8 @@
             for (let nom in catalogueProduits) {
                 let prod = catalogueProduits[nom];
                 let btn = document.createElement('button');
-                btn.className = 'btn-produit';
-                btn.setAttribute('data-cat', prod.cat);
-                btn.setAttribute('data-id', nom);
+                btn.className = 'btn-produit'; btn.setAttribute('data-cat', prod.cat); btn.setAttribute('data-id', nom);
                 btn.onclick = (e) => gererClicProduit(nom, prod.prix, e);
-                btn.oncontextmenu = (e) => gererClicDroitProduit(nom, e);
                 
                 btn.innerHTML = `
                     <span class="stock-tag" id="stock-${nom}"></span>
@@ -555,7 +537,6 @@
             if (configStocks === null) { configStocks = 'false'; localStorage.setItem('stocks_actif', 'false'); }
             chkActiverStocks.checked = (configStocks === 'true');
             
-            // Restauration du ticket en cours s'il y en a un
             let ticketSauvegarde = localStorage.getItem('ticket_actuel');
             if (ticketSauvegarde) { ticketActuel = new Map(JSON.parse(ticketSauvegarde)); }
             
@@ -596,35 +577,28 @@
         
         function toggleGestionStocks() { 
             localStorage.setItem('stocks_actif', chkActiverStocks.checked ? 'true' : 'false'); 
-            if (!chkActiverStocks.checked && modeEditionStockActif) { toggleModeEditionStock(); } 
             appliquerGestionStocks(); 
         }
         
         function appliquerGestionStocks() {
             const actif = chkActiverStocks.checked;
-            btnRefill.style.display = actif ? 'block' : 'none';
             
             if (actif) {
-                wrapperSubMaster.style.display = 'flex';
-                blockSyncReseau.style.display = 'block';
+                wrapperSubMaster.style.display = 'flex'; blockSyncReseau.style.display = 'block';
             } else {
-                wrapperSubMaster.style.display = 'none';
-                blockSyncReseau.style.display = 'none';
-                if (chkModeMaster.checked) {
-                    chkModeMaster.checked = false;
-                    toggleModeMaster();
-                }
+                wrapperSubMaster.style.display = 'none'; blockSyncReseau.style.display = 'none';
+                if (chkModeMaster.checked) { chkModeMaster.checked = false; toggleModeMaster(); }
             }
 
             document.querySelectorAll('.btn-produit').forEach(btn => {
                 const id = btn.getAttribute('data-id');
-                if(!id) return; // Ignore le bouton d'ajout d'article
+                if(!id) return;
                 const badge = document.getElementById(`stock-${id}`);
                 if (badge) {
                     if (actif) {
                         badge.style.display = 'block'; badge.textContent = catalogueProduits[id].stock || 0;
                         if ((catalogueProduits[id].stock || 0) <= 5) { badge.classList.add('low'); } else { badge.classList.remove('low'); }
-                        btn.disabled = ((catalogueProduits[id].stock || 0) <= 0 && !modeEditionStockActif && !modeEditionArticleActif);
+                        btn.disabled = ((catalogueProduits[id].stock || 0) <= 0 && !modeEditionArticleActif);
                     } else { badge.style.display = 'none'; btn.disabled = false; }
                 }
             });
@@ -639,20 +613,7 @@
             });
         }
 
-        function toggleModeEditionStock() {
-            if (modeEditionArticleActif) toggleModeEditionArticles(); // Ferme l'autre mode s'il est actif
-            modeEditionStockActif = !modeEditionStockActif; multiplicateurEnCours = 1; mettreAJourVisuelMultiplicateurs();
-            if (modeEditionStockActif) {
-                document.body.classList.add('edit-stock-mode'); btnRefill.textContent = "💾 Quitter le Mode Édition (Sauvegarder)"; btnRefill.style.backgroundColor = "var(--success)";
-            } else {
-                document.body.classList.remove('edit-stock-mode'); btnRefill.textContent = "✏️ Ajuster les stocks (Mode Édition)"; btnRefill.style.backgroundColor = "var(--warning)";
-                localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
-            }
-            appliquerGestionStocks();
-        }
-
         function toggleModeEditionArticles() {
-            if (modeEditionStockActif) toggleModeEditionStock(); // Ferme l'édition des stocks si actif
             modeEditionArticleActif = !modeEditionArticleActif;
             
             if (modeEditionArticleActif) {
@@ -661,7 +622,7 @@
                 btnArticleEditToggle.style.backgroundColor = "var(--success)";
             } else {
                 document.body.classList.remove('edit-article-mode');
-                btnArticleEditToggle.textContent = "⚙️ Gérer les Articles (Prix, Noms...)";
+                btnArticleEditToggle.textContent = "⚙️ Gérer les Articles (Prix, Noms, Stocks...)";
                 btnArticleEditToggle.style.backgroundColor = "#9b59b6";
                 localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
                 regenererDictionnairesIndex();
@@ -672,30 +633,33 @@
 
         function ouvrirModalArticle(nom = "") {
             document.getElementById('modal-article').style.display = 'flex';
+            
+            // Affichage conditionnel de la ligne stock selon l'option globale de suivi des stocks
+            const gestionStocksActivee = chkActiverStocks.checked;
+            document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
+
             if (nom) {
-                // Modification d'un article existant
                 document.getElementById('modal-article-titre').textContent = "Modifier l'article";
                 document.getElementById('form-old-id').value = nom;
                 document.getElementById('form-libelle').value = nom;
                 document.getElementById('form-prix').value = catalogueProduits[nom].prix;
                 document.getElementById('form-cat').value = catalogueProduits[nom].cat;
+                document.getElementById('form-stock').value = catalogueProduits[nom].stock !== undefined ? catalogueProduits[nom].stock : 100;
                 document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
                 document.getElementById('btn-form-supprimer').style.display = 'block';
             } else {
-                // Nouvel article
                 document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
                 document.getElementById('form-old-id').value = "";
                 document.getElementById('form-libelle').value = "";
                 document.getElementById('form-prix').value = "";
                 document.getElementById('form-cat').value = "boisson";
+                document.getElementById('form-stock').value = 100;
                 document.getElementById('form-icon').value = "🥤";
                 document.getElementById('btn-form-supprimer').style.display = 'none';
             }
         }
 
-        function fermerModalArticle() {
-            document.getElementById('modal-article').style.display = 'none';
-        }
+        function fermerModalArticle() { document.getElementById('modal-article').style.display = 'none'; }
 
         function sauvegarderFormulaireArticle() {
             let oldId = document.getElementById('form-old-id').value;
@@ -703,24 +667,25 @@
             let prix = parseFloat(document.getElementById('form-prix').value);
             let cat = document.getElementById('form-cat').value;
             let icon = document.getElementById('form-icon').value.trim() || "📦";
+            
+            // Récupère le stock saisi (ou conserve l'ancien/valeur par défaut si non visible)
+            let nouveauStock = parseInt(document.getElementById('form-stock').value);
+            if (isNaN(nouveauStock) || nouveauStock < 0) nouveauStock = 0;
 
             if (!nouveauLibelle || isNaN(prix) || prix < 0) {
-                alert("Veuillez saisir un nom et un prix valides !");
-                return;
+                alert("Veuillez saisir un nom et un prix valides !"); return;
             }
 
-            // Conserver le stock existant s'il s'agit d'une modification
-            let stockActuel = (oldId && catalogueProduits[oldId]) ? catalogueProduits[oldId].stock : 100;
+            let stockDefaut = (oldId && catalogueProduits[oldId]) ? (catalogueProduits[oldId].stock || 0) : 100;
+            let stockFinal = chkActiverStocks.checked ? nouveauStock : stockDefaut;
 
-            if (oldId && oldId !== nouveauLibelle) {
-                delete catalogueProduits[oldId]; // Supprime l'ancienne clé si le nom a changé
-            }
+            if (oldId && oldId !== nouveauLibelle) { delete catalogueProduits[oldId]; }
 
             catalogueProduits[nouveauLibelle] = {
                 prix: prix,
                 cat: cat,
                 icon: icon,
-                stock: stockActuel
+                stock: stockFinal
             };
 
             localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
@@ -742,23 +707,9 @@
 
         function gererClicProduit(nom, prix, event) {
             if (modeEditionArticleActif) {
-                event.preventDefault();
-                ouvrirModalArticle(nom);
-            } else if (modeEditionStockActif) {
-                event.preventDefault(); 
-                catalogueProduits[nom].stock = (catalogueProduits[nom].stock || 0) + multiplicateurEnCours; 
-                appliquerGestionStocks();
+                event.preventDefault(); ouvrirModalArticle(nom);
             } else { 
                 ajouterAuTicket(nom, prix); 
-            }
-        }
-
-        function gererClicDroitProduit(nom, event) {
-            event.preventDefault();
-            if (modeEditionStockActif) {
-                catalogueProduits[nom].stock = Math.max(0, (catalogueProduits[nom].stock || 0) - multiplicateurEnCours); 
-                appliquerGestionStocks(); 
-                return false;
             }
         }
 
@@ -909,23 +860,16 @@
             document.getElementById('modal-gen-desc').textContent = description;
             
             const target = document.getElementById('qrcode-target');
-            target.innerHTML = '';
-            document.getElementById('modal-generateur').style.display = 'flex';
+            target.innerHTML = ''; document.getElementById('modal-generateur').style.display = 'flex';
 
             setTimeout(() => {
                 const chaineJSON = JSON.stringify(dataObjet);
                 try {
                     new QRCode(target, {
-                        text: chaineJSON,
-                        width: 260,
-                        height: 260,
-                        colorDark : "#2c3e50",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.L
+                        text: chaineJSON, width: 260, height: 260,
+                        colorDark : "#2c3e50", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L
                     });
-                } catch (err) {
-                    alert("Erreur critique d'encodage : " + err);
-                }
+                } catch (err) { alert("Erreur critique d'encodage : " + err); }
             }, 50);
         }
 
@@ -935,44 +879,24 @@
         }
 
         function genererQREnvoiVentes() {
-            if (Object.keys(ventesGlobales).length === 0) {
-                alert("Vous n'avez effectué aucune vente. Rien à transmettre !");
-                return;
-            }
-            
+            if (Object.keys(ventesGlobales).length === 0) { alert("Vous n'avez effectué aucune vente. Rien à transmettre !"); return; }
             let ventesMinimales = [];
             for (let nom in ventesGlobales) {
                 let idNumerique = NOM_VERS_ID[nom];
-                if (idNumerique) {
-                    ventesMinimales.push([idNumerique, ventesGlobales[nom].quantite]);
-                }
+                if (idNumerique) { ventesMinimales.push([idNumerique, ventesGlobales[nom].quantite]); }
             }
-
             const paquet = { t: "V", v: ventesMinimales };
-
-            afficherModalGenerateur(
-                "🟧 Transmettre mes Ventes",
-                "Montrez ce QR Code au responsable de la Caisse Centrale (Master) pour enregistrer vos ventes.",
-                paquet
-            );
+            afficherModalGenerateur("🟧 Transmettre mes Ventes", "Montrez ce QR Code au responsable de la Caisse Centrale (Master) pour enregistrer vos ventes.", paquet);
         }
 
         function genererQREnvoiStockFrais() {
             let stocksMinimaux = [];
             for (let nom in catalogueProduits) {
                 let idNumerique = NOM_VERS_ID[nom];
-                if (idNumerique) {
-                    stocksMinimaux.push([idNumerique, catalogueProduits[nom].stock || 0]);
-                }
+                if (idNumerique) { stocksMinimaux.push([idNumerique, catalogueProduits[nom].stock || 0]); }
             }
-
             const paquet = { t: "S", s: stocksMinimaux };
-
-            afficherModalGenerateur(
-                "🟩 Déploiement des Stocks Frais",
-                "Les bénévoles doivent scanner ce QR Code pour synchroniser leurs compteurs locaux.",
-                paquet
-            );
+            afficherModalGenerateur("🟩 Déploiement des Stocks Frais", "Les bénévoles doivent scanner ce QR Code pour synchroniser leurs compteurs locaux.", paquet);
         }
 
         function demarrerScanner(titre, callbackTraitement) {
@@ -981,67 +905,42 @@
 
             html5QrcodeScanner = new Html5Qrcode("reader");
             html5QrcodeScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
+                { facingMode: "environment" }, { fps: 10, qrbox: 250 },
                 (decodedText) => {
                     try {
                         const objetDecodé = JSON.parse(decodedText);
-                        callbackTraitement(objetDecodé);
-                        fermerScanner();
-                    } catch(e) {
-                        alert("⚠️ Erreur : Le QR code scanné n'est pas un format valide.");
-                        fermerScanner();
-                    }
+                        callbackTraitement(objetDecodé); fermerScanner();
+                    } catch(e) { alert("⚠️ Erreur : Le QR code scanné n'est pas un format valide."); fermerScanner(); }
                 },
                 () => { }
-            ).catch(err => {
-                alert("Impossible d'accéder à la caméra : " + err);
-                fermerScanner();
-            });
+            ).catch(err => { alert("Impossible d'accéder à la caméra : " + err); fermerScanner(); });
         }
 
         function fermerScanner() {
             document.getElementById('modal-scanner').style.display = 'none';
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; }).catch(console.error);
-            }
+            if (html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; }).catch(console.error); }
         }
 
         function ouvrirScannerVentesBenevole() {
             demarrerScanner("📷 Scannez le QR 'Ventes' d'un bénévole", (paquet) => {
-                if (paquet.t !== "V") {
-                    alert("Erreur : Ce QR Code ne provient pas de la caisse d'un bénévole.");
-                    return;
-                }
+                if (paquet.t !== "V") { alert("Erreur : Ce QR Code ne provient pas de la caisse d'un bénévole."); return; }
 
-                let recapTexte = "Ventes détectées :\n";
-                let ventesTraduites = [];
-
+                let recapTexte = "Ventes détectées :\n"; let ventesTraduites = [];
                 paquet.v.forEach(([idNumerique, quantite]) => {
                     let nomReel = ID_VERS_NOM[idNumerique];
-                    if (nomReel) {
-                        recapTexte += `• ${nomReel} : x${quantite}\n`;
-                        ventesTraduites.push([nomReel, quantite]);
-                    }
+                    if (nomReel) { recapTexte += `• ${nomReel} : x${quantite}\n`; ventesTraduites.push([nomReel, quantite]); }
                 });
 
                 if (confirm(recapTexte + "\nConfirmer l'intégration de ces ventes dans la Caisse Centrale ?")) {
                     ventesTraduites.forEach(([nom, quantite]) => {
                         catalogueProduits[nom].stock = Math.max(0, (catalogueProduits[nom].stock || 0) - quantite);
                         let prixOfficiel = catalogueProduits[nom] ? catalogueProduits[nom].prix : 0;
-
-                        if (ventesGlobales[nom]) {
-                            ventesGlobales[nom].quantite += quantite;
-                        } else {
-                            ventesGlobales[nom] = { prix: prixOfficiel, quantite: quantite };
-                        }
+                        if (ventesGlobales[nom]) { ventesGlobales[nom].quantite += quantite; } 
+                        else { ventesGlobales[nom] = { prix: prixOfficiel, quantite: quantite }; }
                     });
-
                     recalculerFinancesMasterDepuisVentes();
                     localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
-                    appliquerGestionStocks();
-                    mettreAJourSuiviGlobal();
-
+                    appliquerGestionStocks(); mettreAJourSuiviGlobal();
                     alert("✅ Ventes intégrées avec succès !");
                 }
             });
@@ -1049,28 +948,18 @@
 
         function ouvrirScannerStockFrais() {
             demarrerScanner("📷 Scannez le QR 'Stock Frais' du Master", (paquet) => {
-                if (paquet.t !== "S") {
-                    alert("Erreur : Ce QR Code ne contient pas un stock valide émis par la caisse centrale.");
-                    return;
-                }
+                if (paquet.t !== "S") { alert("Erreur : Ce QR Code ne contient pas un stock valide émis par la caisse centrale."); return; }
 
                 if (confirm("Mettre à jour vos stocks avec les données officielles de la Caisse Centrale ?")) {
                     paquet.s.forEach(([idNumerique, stock]) => {
                         let nomReel = ID_VERS_NOM[idNumerique];
-                        if (nomReel && catalogueProduits[nomReel]) {
-                            catalogueProduits[nomReel].stock = stock;
-                        }
+                        if (nomReel && catalogueProduits[nomReel]) { catalogueProduits[nomReel].stock = stock; }
                     });
-                    
                     localStorage.setItem('catalogue_articles', JSON.stringify(catalogueProduits));
-                    
-                    if(confirm("Voulez-vous réinitialiser votre historique local de ventes sur ce téléphone ?\n(Recommandé pour repartir sur un cycle propre)")) {
-                        ventesGlobales = {};
-                        totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0;
+                    if(confirm("Voulez-vous réinitialiser votre historique local de ventes sur ce téléphone ?")) {
+                        ventesGlobales = {}; totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0;
                     }
-
-                    appliquerGestionStocks();
-                    mettreAJourSuiviGlobal();
+                    appliquerGestionStocks(); mettreAJourSuiviGlobal();
                     alert("✅ Alignement des stocks réussi !");
                 }
             });
@@ -1080,8 +969,7 @@
             totalGeneral = 0; totalEspeces = 0; totalCarte = 0; totalOffert = 0;
             for(let nom in ventesGlobales) {
                 let item = ventesGlobales[nom];
-                totalEspeces += (item.prix * item.quantite);
-                totalGeneral += (item.prix * item.quantite);
+                totalEspeces += (item.prix * item.quantite); totalGeneral += (item.prix * item.quantite);
             }
         }
 
@@ -1111,7 +999,7 @@
             }
         }
 
-        /* Anti-rechargement par geste tactile */
+        /* Anti-rechargement tactile */
         let touchStartYSynchronized = 0;
         window.addEventListener('touchstart', function (e) {
             if (e.touches.length === 1) { touchStartYSynchronized = e.touches[0].clientY; }
