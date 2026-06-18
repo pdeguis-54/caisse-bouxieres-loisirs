@@ -490,6 +490,12 @@
         let totalTicketRenduGlobal = 0;
         let cbFinValidationTicket = null;
 
+        // Variables pour gérer le cumul dynamique dans le toast
+        let toastActuelElement = null;
+        let toastActuelTimeout = null;
+        let toastActuelNomProduit = null;
+        let toastActuelQuantiteCumulee = 0;
+
         const BIBLIOTHEQUE_EMOJIS = [
             '🥤', '🍺', '☕', '💧', '🍹', '🍷', '🍾', 
             '🥖', '🌭', '🍟', '🥪', '🌭', '🍕', '🍔', 
@@ -856,30 +862,57 @@
 
             localStorage.setItem('ticket_actuel', JSON.stringify(Array.from(ticketActuel.entries())));
             
-            // --- AJOUT DE LA BULLE DE VALIDATION TEMPORAIRE (TOAST) ---
-            let toast = document.createElement('div');
+            // --- GESTION DU TOAST AVEC CUMUL DYNAMIQUE ---
             let iconeProduit = catalogueProduits[nom]?.icon || '🛒';
-            toast.textContent = `${iconeProduit} ${nom} (x${qteAAjouter}) ajouté au panier`;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.backgroundColor = 'var(--success)';
-            toast.style.color = 'white';
-            toast.style.padding = '12px 24px';
-            toast.style.borderRadius = '30px';
-            toast.style.fontSize = '1.05rem';
-            toast.style.fontWeight = 'bold';
-            toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-            toast.style.zIndex = '3000';
-            toast.style.pointerEvents = 'none'; // Permet de continuer à cliquer "à travers" la bulle sans gêne
-            toast.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-            document.body.appendChild(toast);
+            
+            if (toastActuelElement && toastActuelNomProduit === nom) {
+                // Un toast existe déjà pour le même produit, on cumule
+                toastActuelQuantiteCumulee += qteAAjouter;
+                toastActuelElement.textContent = `${iconeProduit} ${nom} (x${toastActuelQuantiteCumulee}) ajouté au panier`;
+                
+                // On réinitialise le délai de disparition
+                clearTimeout(toastActuelTimeout);
+            } else {
+                // Nouveau produit ou aucun toast affiché, on nettoie l'ancien s'il existe
+                if (toastActuelElement) { toastActuelElement.remove(); }
+                
+                toastActuelNomProduit = nom;
+                toastActuelQuantiteCumulee = qteAAjouter;
+                
+                toastActuelElement = document.createElement('div');
+                toastActuelElement.textContent = `${iconeProduit} ${nom} (x${toastActuelQuantiteCumulee}) ajouté au panier`;
+                toastActuelElement.style.position = 'fixed';
+                toastActuelElement.style.bottom = '20px';
+                toastActuelElement.style.left = '50%';
+                toastActuelElement.style.transform = 'translateX(-50%)';
+                toastActuelElement.style.backgroundColor = 'var(--success)';
+                toastActuelElement.style.color = 'white';
+                toastActuelElement.style.padding = '12px 24px';
+                toastActuelElement.style.borderRadius = '30px';
+                toastActuelElement.style.fontSize = '1.05rem';
+                toastActuelElement.style.fontWeight = 'bold';
+                toastActuelElement.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                toastActuelElement.style.zIndex = '3000';
+                toastActuelElement.style.pointerEvents = 'none';
+                toastActuelElement.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                document.body.appendChild(toastActuelElement);
+            }
 
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translate(-50%, 10px)';
-                setTimeout(() => toast.remove(), 200);
+            // Déclenchement de l'animation de disparition après 1 seconde d'inactivité
+            toastActuelTimeout = setTimeout(() => {
+                if (toastActuelElement) {
+                    let elARetirer = toastActuelElement;
+                    elARetirer.style.opacity = '0';
+                    elARetirer.style.transform = 'translate(-50%, 10px)';
+                    setTimeout(() => elARetirer.remove(), 200);
+                    
+                    // On remet à zéro les variables de suivi si c'était le toast courant
+                    if (toastActuelElement === elARetirer) {
+                        toastActuelElement = null;
+                        toastActuelNomProduit = null;
+                        toastActuelQuantiteCumulee = 0;
+                    }
+                }
             }, 1000);
             // ----------------------------------------------------------
 
@@ -1038,33 +1071,6 @@
             logoOverlay.classList.add('visible'); setTimeout(() => { logoOverlay.classList.remove('visible'); }, 1100);
 
             ticketActuel.clear(); localStorage.removeItem('ticket_actuel'); mettreAJourTicket(); mettreAJourSuiviGlobal();
-        }
-
-        function abrirModalArticle(nom = "") {
-            document.getElementById('modal-article').style.display = 'flex';
-            
-            const gestionStocksActivee = chkActiverStocks.checked;
-            document.getElementById('form-stock-row').style.display = gestionStocksActivee ? 'flex' : 'none';
-
-            if (nom) {
-                document.getElementById('modal-article-titre').textContent = "Modifier l'article";
-                document.getElementById('form-old-id').value = nom;
-                document.getElementById('form-libelle').value = nom;
-                document.getElementById('form-prix').value = catalogueProduits[nom].prix;
-                document.getElementById('form-cat').value = catalogueProduits[nom].cat;
-                document.getElementById('form-stock').value = catalogueProduits[nom].stock !== undefined ? catalogueProduits[nom].stock : 100;
-                document.getElementById('form-icon').value = catalogueProduits[nom].icon || "";
-                document.getElementById('btn-form-supprimer').style.display = 'block';
-            } else {
-                document.getElementById('modal-article-titre').textContent = "Ajouter un nouvel article";
-                document.getElementById('form-old-id').value = "";
-                document.getElementById('form-libelle').value = "";
-                document.getElementById('form-prix').value = "";
-                document.getElementById('form-cat').value = "boisson";
-                document.getElementById('form-stock').value = 100;
-                document.getElementById('form-icon').value = "🥤";
-                document.getElementById('btn-form-supprimer').style.display = 'none';
-            }
         }
 
         function annulerDerniereVente() {
