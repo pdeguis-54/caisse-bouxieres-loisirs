@@ -1547,55 +1547,8 @@
             const heureStr = dateActuelle.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             const nomBenevole = (typeof benevoleActif !== 'undefined' && benevoleActif) ? benevoleActif : "Non spécifié";
         
-            const fenetreImpression = window.open('', '_blank', 'width=400,height=600');
-            
+            // 1. Préparation du HTML du ticket
             let htmlContenu = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Carte Conso - Bouxières Loisirs</title>
-                <style>
-                    @page { size: 80mm auto; margin: 0; }
-                    body { 
-                        font-family: 'Courier New', Courier, monospace; 
-                        width: 76mm; 
-                        margin: 0 auto; 
-                        padding: 5mm 2mm;
-                        font-size: 11pt;
-                        color: #000;
-                    }
-                    .align-center { text-align: center; }
-                    .header-titre { font-size: 13pt; font-weight: bold; margin-bottom: 2mm; text-transform: uppercase; }
-                    .infos-session { font-size: 9pt; border-bottom: 1px dashed #000; padding-bottom: 3mm; margin-bottom: 4mm; }
-                    
-                    .grille-cases {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 3mm;
-                    }
-                    .case-ticket {
-                        border: 2px solid #000;
-                        border-radius: 4px;
-                        padding: 4mm 2mm;
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        min-height: 12mm;
-                        page-break-inside: avoid;
-                    }
-                    .case-nom { font-weight: bold; font-size: 12pt; max-width: 75%; text-transform: uppercase; }
-                    .case-checkbox {
-                        width: 6mm;
-                        height: 6mm;
-                        border: 2px solid #000;
-                        display: inline-block;
-                        border-radius: 2px;
-                    }
-                    .footer-ticket { margin-top: 5mm; font-size: 8.5pt; border-top: 1px dashed #000; padding-top: 2mm; text-align: center; }
-                </style>
-            </head>
-            <body>
                 <div class="align-center header-titre">BOUXIÈRES LOISIRS</div>
                 <div class="align-center header-titre">CARTE CONSO</div>
                 
@@ -1607,7 +1560,6 @@
                 <div class="grille-cases">
             `;
         
-            // Conversion de la Map du panier vers un tableau d'entrées [nomBrut, donnees]
             const itemsPanier = (mapPanier instanceof Map) ? Array.from(mapPanier.entries()) : mapPanier;
         
             itemsPanier.forEach(element => {
@@ -1615,7 +1567,7 @@
                 let donneesArticle = {};
         
                 if (Array.isArray(element)) {
-                    nomArticle = element[0]; // Clé de la Map (ex: "Coca", "Bière")
+                    nomArticle = element[0];
                     donneesArticle = element[1];
                 } else if (element && element.nom) {
                     nomArticle = element.nom;
@@ -1626,19 +1578,15 @@
         
                 if (!nomArticle) return;
         
-                let iconeProduit = "🎟️"; // Émoji par défaut de secours
+                let iconeProduit = "🎟️";
         
-                // Extraction de l'émoji depuis le catalogue actif "catalogueProduits"
                 if (typeof catalogueProduits !== 'undefined' && catalogueProduits && catalogueProduits[nomArticle]) {
                     if (catalogueProduits[nomArticle].icon) {
-                        iconeProduit = catalogueProduits[nomArticle].icon; // Récupère l'émoji dédié (ex: '🍺', '🥤')
+                        iconeProduit = catalogueProduits[nomArticle].icon;
                     }
                 }
         
-                // Forcer le libellé de l'article en Lettres MAJUSCULES pour une visibilité optimale
                 const nomArticleMajuscule = nomArticle.toUpperCase();
-        
-                // Duplication des cases selon la quantité commandée
                 const qte = donneesArticle.quantite || 1;
                 for (let i = 0; i < qte; i++) {
                     htmlContenu += `
@@ -1652,24 +1600,62 @@
         
             htmlContenu += `
                 </div>
-        
-                <div class="footer-ticket">
+                <div class="align-center footer-ticket">
                     À présenter au stand concerné.<br>Les bénévoles rayeront la case à la livraison.
                 </div>
-        
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(function() { window.close(); }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
             `;
         
-            fenetreImpression.document.open();
-            fenetreImpression.document.write(htmlContenu);
-            fenetreImpression.document.close();
+            // 2. TECHNIQUE COMPATIBLE MOBILE & PC : Conteneur masqué injecté dans la page
+            let zoneImpressionMobile = document.getElementById('zone-impression-mobile');
+            if (!zoneImpressionMobile) {
+                zoneImpressionMobile = document.createElement('div');
+                zoneImpressionMobile.id = 'zone-impression-mobile';
+                document.body.appendChild(zoneImpressionMobile);
+                
+                // Ajout du style CSS dédié à l'impression en rouleau 80mm
+                const stylePrint = document.createElement('style');
+                stylePrint.innerHTML = `
+                    @media print {
+                        body > *:not(#zone-impression-mobile) { display: none !important; }
+                        body { background: #fff !important; color: #000 !important; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 0; }
+                        #zone-impression-mobile { 
+                            display: block !important; 
+                            width: 76mm; 
+                            margin: 0 auto; 
+                            padding: 5mm 2mm;
+                            font-size: 11pt;
+                        }
+                        .align-center { text-align: center; }
+                        .header-titre { font-size: 13pt; font-weight: bold; margin-bottom: 2mm; text-transform: uppercase; }
+                        .infos-session { font-size: 9pt; border-bottom: 1px dashed #000; padding-bottom: 3mm; margin-bottom: 4mm; line-height: 1.4; }
+                        .grille-cases { display: flex; flex-direction: column; gap: 3mm; }
+                        .case-ticket {
+                            border: 2px solid #000;
+                            border-radius: 4px;
+                            padding: 4mm 2mm;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            min-height: 12mm;
+                            page-break-inside: avoid;
+                        }
+                        .case-nom { font-weight: bold; font-size: 12pt; max-width: 75%; text-transform: uppercase; }
+                        .case-checkbox { width: 6mm; height: 6mm; border: 2px solid #000; display: inline-block; border-radius: 2px; }
+                        .footer-ticket { margin-top: 5mm; font-size: 8.5pt; border-top: 1px dashed #000; padding-top: 2mm; text-align: center; }
+                    }
+                    @media screen {
+                        #zone-impression-mobile { display: none; }
+                    }
+                `;
+                document.head.appendChild(stylePrint);
+            }
+        
+            // 3. Remplissage et déclenchement de l'impression native sans ouvrir de popup instable
+            zoneImpressionMobile.innerHTML = htmlContenu;
+            
+            setTimeout(function() {
+                window.print();
+            }, 250);
         };
 
         /* Anti-rechargement tactile */
