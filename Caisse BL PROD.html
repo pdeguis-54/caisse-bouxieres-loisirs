@@ -306,14 +306,6 @@
     <h1>Bouxières Loisirs</h1>
     <h2>Système de Caisse <span id="titre-benevole-actif" class="txt-nom-benevole-titre"></span></h2>
 
-    <div class="block-benevole-top" id="container-selection-benevole">
-        <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
-        <div class="benevole-select-row">
-            <select id="select-benevole-top"></select>
-            <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
-        </div>
-    </div>
-
     <div class="barre-multiplicateurs">
         <button class="btn-mult" id="mult-2" onclick="changerMultiplicateur(2)">x2</button>
         <button class="btn-mult" id="mult-5" onclick="changerMultiplicateur(5)">x5</button>
@@ -410,6 +402,14 @@
             </div>
 
             <div style="margin-top: 15px; border-top: 1px dashed var(--dark-light); padding-top: 12px;">
+                <div class="block-benevole-top" id="container-selection-benevole">
+                    <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
+                    <div class="benevole-select-row">
+                        <select id="select-benevole-top"></select>
+                        <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
+                    </div>
+                </div>
+                
                 <label style="font-weight: bold; color: #f1c40f; display: block; margin-bottom: 5px;">👥 Gestion des Bénévoles :</label>
                 <div class="wrapper-gestion-benevoles" id="liste-benevoles-config"></div>
                 <button class="btn-small-add" onclick="abrirModalBenevole()">➕ Ajouter un bénévole</button>
@@ -559,7 +559,7 @@
             '🥤', '🍺', '☕', '💧', '🍹', '🍷', '🍾', 
             '🥖', '🌭', '🍟', '🥪', '🌭', '🍕', '🍔', 
             '🥞', '🧇', '🍦', '🍩', '🍫', '🍬', 
-            '♻️', '🎟️', '🎈', '🎲', '🎁', '📦'  
+            '♻️' 
         ];
 
         const CATALOGUE_PAR_DEFAUT = {
@@ -723,77 +723,90 @@
         }
 
         function rendreInterfaceBenevoles() {
-            // Remplir le select de démarrage / haut de page
-            const selectTop = document.getElementById('select-benevole-top');
-            selectTop.innerHTML = '';
-            
-            let optDefaut = document.createElement('option');
-            optDefaut.value = ""; optDefaut.textContent = "-- Choisissez votre nom --";
-            selectTop.appendChild(optDefaut);
+    // Remplir le select de démarrage / haut de page (uniquement s'il est présent)
+    const selectTop = document.getElementById('select-benevole-top');
+    
+    if (selectTop) {
+        selectTop.innerHTML = '';
+        let optDefaut = document.createElement('option');
+        optDefaut.value = ""; optDefaut.textContent = "-- Choisissez votre nom --";
+        selectTop.appendChild(optDefaut);
+        
+        listeBenevoles.forEach(nom => {
+            let opt = document.createElement('option');
+            opt.value = nom; opt.textContent = nom;
+            if (nom === benevoleActif) opt.selected = true;
+            selectTop.appendChild(opt);
+        });
+    }
 
-            listeBenevoles.forEach(nom => {
-                let opt = document.createElement('option');
-                opt.value = nom; opt.textContent = nom;
-                if (nom === benevoleActif) opt.selected = true;
-                selectTop.appendChild(opt);
-            });
-
-            // Afficher ou masquer le bandeau d'alerte en haut
-            const containerSelection = document.getElementById('container-selection-benevole');
-            const titreBenevoleActif = document.getElementById('titre-benevole-actif');
+    // Afficher ou masquer le bandeau d'alerte en haut
+    const containerSelection = document.getElementById('container-selection-benevole');
+    const titreBenevoleActif = document.getElementById('titre-benevole-actif');
+    
+    if (containerSelection) {
+        if (benevoleActif) {
+            if (titreBenevoleActif) titreBenevoleActif.textContent = `(Bénévole : ${benevoleActif})`;
+            containerSelection.innerHTML = `
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center; max-width:500px; font-size:0.95rem;">
+                    <span>Session active : <strong>${benevoleActif}</strong></span>
+                    <button class="btn-retirer" style="background:#34495e; margin:0; padding:4px 10px;" onclick="deconnecterBenevole()">Changer</button>
+                </div>
+            `;
+            containerSelection.style.background = "var(--bg-block-caisse)";
+            containerSelection.style.color = "var(--text-block-caisse)";
+            containerSelection.style.padding = "8px 12px";
+        } else {
+            if (titreBenevoleActif) titreBenevoleActif.textContent = "";
+            containerSelection.style.background = "#e67e22";
+            containerSelection.style.color = "white";
+            containerSelection.style.padding = "12px";
             
-            if (benevoleActif) {
-                titreBenevoleActif.textContent = `(Bénévole : ${benevoleActif})`;
-                containerSelection.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center; max-width:500px; font-size:0.95rem;">
-                        <span>Session active : <strong>${benevoleActif}</strong></span>
-                        <button class="btn-retirer" style="background:#34495e; margin:0; padding:4px 10px;" onclick="deconnecterBenevole()">Changer</button>
-                    </div>
-                `;
-                containerSelection.style.background = "var(--bg-block-caisse)";
-                containerSelection.style.color = "var(--text-block-caisse)";
-                containerSelection.style.padding = "8px 12px";
-            } else {
-                titreBenevoleActif.textContent = "";
-                containerSelection.style.background = "#e67e22";
-                containerSelection.style.color = "white";
-                containerSelection.style.padding = "12px";
-                containerSelection.innerHTML = `
-                    <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
-                    <div class="benevole-select-row">
-                        <select id="select-benevole-top"></select>
-                        <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
-                    </div>
-                `;
-                // Reremplir après reconstruction HTML brute
-                const newSelect = document.getElementById('select-benevole-top');
-                newSelect.innerHTML = '';
-                newSelect.appendChild(optDefaut);
+            // Au lieu d'écraser le HTML, on réaffiche simplement la structure de sélection d'origine propre
+            containerSelection.innerHTML = `
+                <label for="select-benevole-top">👤 Qui utilise la caisse ? Sélectionnez votre nom :</label>
+                <div class="benevole-select-row">
+                    <select id="select-benevole-top"></select>
+                    <button class="btn-benevole-valider" onclick="validerSelectionBenevole()">Valider</button>
+                </div>
+            `;
+            
+            // On re-remplit immédiatement le menu qui vient d'être nettoyé
+            const freshSelect = document.getElementById('select-benevole-top');
+            if (freshSelect) {
+                let optDefautFresh = document.createElement('option');
+                optDefautFresh.value = ""; optDefautFresh.textContent = "-- Choisissez votre nom --";
+                freshSelect.appendChild(optDefautFresh);
+                
                 listeBenevoles.forEach(nom => {
                     let opt = document.createElement('option');
                     opt.value = nom; opt.textContent = nom;
-                    newSelect.appendChild(opt);
-                });
-            }
-
-            // Remplir l'interface de listing dans le panneau de configuration
-            const containerConfig = document.getElementById('liste-benevoles-config');
-            containerConfig.innerHTML = '';
-            
-            if (listeBenevoles.length === 0) {
-                containerConfig.innerHTML = `<p style="margin:5px 0; font-size:0.85rem; opacity:0.6; text-align:center;">Aucun bénévole configuré</p>`;
-            } else {
-                listeBenevoles.forEach((nom, index) => {
-                    let divLigne = document.createElement('div');
-                    divLigne.className = 'ligne-liste-benevole';
-                    divLigne.innerHTML = `
-                        <span style="font-size:0.9rem;">${nom}</span>
-                        <button class="btn-small-edit" onclick="abrirModalBenevole(${index})">Éditer</button>
-                    `;
-                    containerConfig.appendChild(divLigne);
+                    freshSelect.appendChild(opt);
                 });
             }
         }
+    }
+
+    // Remplir l'interface de listing dans le panneau de configuration
+    const containerConfig = document.getElementById('liste-benevoles-config');
+    if (containerConfig) {
+        containerConfig.innerHTML = '';
+        
+        if (listeBenevoles.length === 0) {
+            containerConfig.innerHTML = `<p style="margin:5px 0; font-size:0.85rem; opacity:0.6; text-align:center;">Aucun bénévole configuré</p>`;
+        } else {
+            listeBenevoles.forEach((nom, index) => {
+                let divLigne = document.createElement('div');
+                divLigne.className = 'ligne-liste-benevole';
+                divLigne.innerHTML = `
+                    <span style="font-size:0.9rem;">${nom}</span>
+                    <button class="btn-small-edit" onclick="abrirModalBenevole(${index})">Éditer</button>
+                `;
+                containerConfig.appendChild(divLigne);
+            });
+        }
+    }
+}
 
         function validerSelectionBenevole() {
             const val = document.getElementById('select-benevole-top').value;
@@ -804,9 +817,14 @@
         }
 
         function deconnecterBenevole() {
-            benevoleActif = "";
-            localStorage.removeItem('benevole_actif_bl');
-            rendreInterfaceBenevoles();
+                // 1. Réinitialise la variable globale du bénévole actif
+                benevoleActif = ""; 
+    
+                // 2. Supprime le bénévole actif de la mémoire locale
+                localStorage.removeItem('benevole_actif_bl'); 
+    
+                // 3. Met à jour l'interface graphique pour réafficher le choix du bénévole
+                rendreInterfaceBenevoles(); 
         }
 
         function abrirModalBenevole(index = -1) {
